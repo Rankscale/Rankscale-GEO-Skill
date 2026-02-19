@@ -24,6 +24,68 @@ const WIDTH = 55;
 const MAX_RETRIES = 3;
 const BACKOFF_BASE_MS = 1000;
 
+// ─── Safe Accessor Helpers ───────────────────────────────
+
+/**
+ * Safely get a nested property by dot-path.
+ * Returns defaultVal if any part of the path is null/undefined
+ * or if obj itself is falsy.
+ *
+ * @param {object} obj
+ * @param {string} path  - e.g. 'data.ownBrandMetrics.visibilityScore'
+ * @param {*}      [defaultVal=null]
+ * @returns {*}
+ * @example safeGet(raw, 'data.ownBrandMetrics.visibilityScore', 0)
+ */
+function safeGet(obj, path, defaultVal = null) {
+  if (!obj) return defaultVal;
+  const keys = path.split('.');
+  let cur = obj;
+  for (const key of keys) {
+    if (cur == null || typeof cur !== 'object') return defaultVal;
+    cur = cur[key];
+  }
+  return cur ?? defaultVal;
+}
+
+/**
+ * Safe numeric coercion.
+ * Returns defaultVal when val is null, undefined, NaN, or non-finite.
+ *
+ * @param {*}      val
+ * @param {number} [defaultVal=0]
+ * @returns {number}
+ */
+function safeNum(val, defaultVal = 0) {
+  if (val == null) return defaultVal;
+  const n = Number(val);
+  return Number.isFinite(n) ? n : defaultVal;
+}
+
+/**
+ * Safe toFixed that handles null/undefined/NaN.
+ * Returns a rounded number (not a string).
+ *
+ * @param {*}      val
+ * @param {number} [decimals=1]
+ * @param {number} [defaultVal=0]
+ * @returns {number}
+ */
+function safeFixed(val, decimals = 1, defaultVal = 0) {
+  const n = safeNum(val, defaultVal);
+  return +n.toFixed(decimals);
+}
+
+/**
+ * Safe array — always returns an array regardless of input.
+ *
+ * @param {*} val
+ * @returns {Array}
+ */
+function safeArray(val) {
+  return Array.isArray(val) ? val : [];
+}
+
 // ─── Credential Resolution ───────────────────────────────
 function resolveCredentials(args = {}) {
   const apiKey =
@@ -230,6 +292,35 @@ async function fetchSearchTerms(apiKey, brandId) {
   return apiRequest('metricsV1SearchTerms', apiKey, 'POST', { brandId });
 }
 
+/**
+ * POST /metricsV1Citations — standalone citation metrics.
+ * Response shapes:
+ *   Format A: { brandId, count, rate, industryAvg, sources: [...] }
+ *   Format B: { total, citationRate, benchmarkRate, topSources: [...] }
+ *
+ * @param {string} apiKey
+ * @param {string} brandId
+ * @returns {Promise<object>}
+ */
+async function fetchCitations(apiKey, brandId) {
+  return apiRequest('metricsV1Citations', apiKey, 'POST', { brandId });
+}
+
+/**
+ * POST /metricsV1Sentiment — standalone sentiment metrics.
+ * Response shapes:
+ *   Format A: { positive: 0.61, neutral: 0.29, negative: 0.10, sampleSize: 412 }
+ *   Format B: { scores: { pos: 61, neu: 29, neg: 10 }, sampleSize: 412 }
+ *   Format C: { positive: 61, neutral: 29, negative: 10 }
+ *
+ * @param {string} apiKey
+ * @param {string} brandId
+ * @returns {Promise<object>}
+ */
+async function fetchSentiment(apiKey, brandId) {
+  return apiRequest('metricsV1Sentiment', apiKey, 'POST', { brandId });
+}
+
 // ─── Brands Normalization ─────────────────────────────────
 /** Extract brands array from API response (handles envelope) */
 function normalizeBrands(raw) {
@@ -283,45 +374,48 @@ async function discoverBrandId(apiKey, brandName) {
 // ─── Data Normalization ───────────────────────────────────
 
 /**
- * Normalize sentiment — Rankscale returns two formats:
- *   Format A: { positive: 0.61, negative: 0.10, neutral: 0.29 }
- *   Format B: { scores: { pos: 61, neg: 10, neu: 29 } }
+ * Normalize sentiment — Rankscale returns three formats:
+ *   Format A: { positive: 0.61, negative: 0.10, neutral: 0.29 }  (floats 0–1)
+ *   Format B: { scores: { pos: 61, neg: 10, neu: 29 } }           (integers 0–100)
+ *   Format C: { positive: 61, neutral: 29, negative: 10 }         (percentages)
+ *
+ * Fixes F5: operator precedence bug — (pos + neg + neu) || 100
  */
 function normalizeSentiment(raw) {
   if (!raw) return { positive: 0, negative: 0, neutral: 0 };
 
-  // Format B
+  // Format B: nested scores object
   if (raw.scores) {
     const s = raw.scores;
-    const pos = s.pos || s.positive || 0;
-    const neg = s.neg || s.negative || 0;
-    const neu = s.neu || s.neutral || 0;
-    const total = pos + neg + neu || 100;
+    const pos = safeNum(s.pos ?? s.positive);
+    const neg = safeNum(s.neg ?? s.negative);
+    const neu = safeNum(s.neu ?? s.neutral);
+    const total = (pos + neg + neu) || 100;  // explicit parentheses to fix precedence
     return {
-      positive: +(pos / total * 100).toFixed(1),
-      negative: +(neg / total * 100).toFixed(1),
-      neutral: +(neu / total * 100).toFixed(1),
+      positive: safeFixed(pos / total * 100),
+      negative: safeFixed(neg / total * 100),
+      neutral: safeFixed(neu / total * 100),
     };
   }
 
-  // Format A — may be 0–1 floats or 0–100 integers
-  const pos = raw.positive ?? raw.pos ?? 0;
-  const neg = raw.negative ?? raw.neg ?? 0;
-  const neu = raw.neutral ?? raw.neu ?? 0;
+  // Format A / C: flat fields — may be 0–1 floats or 0–100 integers
+  const pos = safeNum(raw.positive ?? raw.pos);
+  const neg = safeNum(raw.negative ?? raw.neg);
+  const neu = safeNum(raw.neutral ?? raw.neu);
 
-  if (pos <= 1 && neg <= 1 && neu <= 1) {
-    // Float format
+  // Detect float (0–1) vs percentage (0–100)
+  if (pos <= 1 && neg <= 1 && neu <= 1 && (pos + neg + neu) <= 3) {
     return {
-      positive: +(pos * 100).toFixed(1),
-      negative: +(neg * 100).toFixed(1),
-      neutral: +(neu * 100).toFixed(1),
+      positive: safeFixed(pos * 100),
+      negative: safeFixed(neg * 100),
+      neutral: safeFixed(neu * 100),
     };
   }
 
   return {
-    positive: +pos.toFixed(1),
-    negative: +neg.toFixed(1),
-    neutral: +neu.toFixed(1),
+    positive: safeFixed(pos),
+    negative: safeFixed(neg),
+    neutral: safeFixed(neu),
   };
 }
 
@@ -340,6 +434,26 @@ function normalizeCitations(raw) {
 }
 
 /**
+ * Return a canonical empty report object used when the API fails or
+ * the response cannot be parsed.
+ *
+ * @returns {object}
+ */
+function emptyReport() {
+  return {
+    score: 0,
+    rank: null,
+    change: 0,
+    brandName: 'Your Brand',
+    detectionRate: null,
+    engines: {},
+    competitors: [],
+    _citationsRaw: { count: 0, rate: 0 },
+    _sentimentRaw: null,
+  };
+}
+
+/**
  * Normalize report response.
  *
  * Real API response shape (metricsV1Report):
@@ -354,81 +468,64 @@ function normalizeCitations(raw) {
  *   }
  *
  * Also handles legacy flat format: { score, rank, change }
+ *
+ * Fixes F1: safeFixed(detectionRate) — no more .toFixed() on undefined
+ * Fixes F2: (own.trends || {}).visibilityScore — guard against undefined trends
  */
 function normalizeReport(raw) {
-  if (!raw) {
-    return {
-      score: 0, rank: null, change: 0,
-      brandName: 'Your Brand', detectionRate: null,
-      engines: {}, competitors: [],
-    };
-  }
+  if (!raw) return emptyReport();
 
   // Unwrap API envelope if present
   const d = raw.data || raw;
   const own = d.ownBrandMetrics || d;
-  const competitorsRaw = d.competitorMetrics || raw.competitors || [];
+  const competitorsRaw = safeArray(d.competitorMetrics || raw.competitors);
+
+  // Score change from trends — guard own.trends being undefined (F2)
+  const trends = own.trends || {};
+  const change = safeNum(
+    trends.visibilityScore ?? raw.change ?? raw.weeklyDelta ?? raw.delta,
+    0
+  );
 
   // Build per-engine map using the most recent value of each engine
   const engineEntries = own.engineMetricsData || {};
-  const engineDaily = (
-    engineEntries.daily ||
-    engineEntries.weekly ||
-    []
-  );
+  const engineDaily = safeArray(engineEntries.daily || engineEntries.weekly);
   const engines = {};
   engineDaily.forEach((e) => {
-    const scores = e.visibilityScore || [];
+    const scores = safeArray(e.visibilityScore);
     if (scores.length > 0) {
       const label = e.engineName || e.engineId || 'unknown';
       // Use the last (most recent) score
-      engines[label] = scores[scores.length - 1];
+      engines[label] = safeNum(scores[scores.length - 1]);
     }
   });
 
-  // Detection rate
-  const detectionRate =
-    own.detectionRate ??
-    raw.detectionRate ??
-    null;
+  // Detection rate — use safeNum to avoid .toFixed() crash (F1)
+  const detectionRate = safeNum(
+    own.detectionRate ?? raw.detectionRate,
+    null
+  );
 
   // Sentiment — API returns a single composite number (0–100)
   // We synthesize positive/negative from it for compatibility
-  const sentimentScore = own.sentiment ?? raw.sentiment ?? null;
-
-  // Score change from trends
-  const change =
-    (own.trends && own.trends.visibilityScore != null
-      ? own.trends.visibilityScore
-      : null) ??
-    raw.change ?? raw.weeklyDelta ?? raw.delta ?? 0;
+  const sentimentScore = safeNum(own.sentiment ?? raw.sentiment, null);
 
   return {
-    score:
-      own.visibilityScore ??
-      own.score ??
-      raw.score ??
-      raw.geoScore ??
-      0,
-    rank:
-      own.rank ??
-      raw.rank ??
-      null,
-    change: +(change).toFixed(1),
-    brandName:
-      own.brandName ??
-      raw.brandName ??
-      raw.brand ??
-      'Your Brand',
-    detectionRate:
-      detectionRate != null ? +detectionRate.toFixed(1) : null,
+    score: safeNum(
+      own.visibilityScore ?? own.score ?? raw.score ?? raw.geoScore,
+      0
+    ),
+    rank: own.rank ?? raw.rank ?? null,
+    change: safeFixed(change),
+    brandName: own.brandName ?? raw.brandName ?? raw.brand ?? 'Your Brand',
+    detectionRate: detectionRate != null ? safeFixed(detectionRate) : null,
     engines,
     competitors: competitorsRaw,
     // Stash raw citation + sentiment values for downstream normalization
     _citationsRaw: {
-      count: own.citations ?? 0,
+      count: safeNum(own.citations, 0),
       // Use detectionRate as the citation rate proxy (both measure presence)
-      rate: own.detectionRate ?? own.citations ?? 0,
+      rate: safeNum(own.detectionRate ?? own.citations, 0),
     },
     _sentimentRaw:
       sentimentScore != null
@@ -440,13 +537,18 @@ function normalizeReport(raw) {
 /**
  * Convert a composite sentiment score (0–100) to pos/neu/neg breakdown.
  * High sentiment → more positive; low → more negative.
+ *
+ * Uses safeNum() to handle string scores gracefully (F3).
+ *
+ * @param {number|string} score  - composite sentiment score 0–100
+ * @returns {{ positive: number, negative: number, neutral: number }}
  */
 function buildSentimentFromScore(score) {
-  // score = 0–100, treat as "positive sentiment %"
-  const positive = Math.min(100, Math.max(0, +score.toFixed(1)));
-  // Model: pos + neu + neg = 100, neg is roughly 100 - score scaled
-  const negative = Math.max(0, +(((100 - positive) * 0.3)).toFixed(1));
-  const neutral = +(100 - positive - negative).toFixed(1);
+  // Coerce safely — handles strings like "65" without arithmetic errors
+  const positive = Math.min(100, Math.max(0, safeFixed(safeNum(score))));
+  // Model: pos + neu + neg = 100, neg is roughly (100 - score) * 0.3
+  const negative = Math.max(0, safeFixed((100 - positive) * 0.3));
+  const neutral = safeFixed(100 - positive - negative);
   return { positive, negative, neutral };
 }
 
@@ -456,7 +558,11 @@ function buildSentimentFromScore(score) {
  * Real API response shape (metricsV1SearchTermsReport):
  *   { data: { timeFrame, searchTerms: [{searchTermId, query, ...}] } }
  *
- * Also handles legacy: { terms: [{query, mentions}] }
+ * Also handles:
+ *   Legacy: { terms: [{query, mentions}] }
+ *   Bare array: [{query, count}]
+ *
+ * Fixes F9: guards t.aiSearchEngines with Array.isArray() before .length
  */
 function normalizeSearchTerms(raw) {
   if (!raw) return [];
@@ -464,22 +570,25 @@ function normalizeSearchTerms(raw) {
   // Unwrap API envelope
   const d = raw.data || raw;
 
-  // Real API format
-  const terms =
+  // Resolve terms array from any known field name, including bare-array response
+  const terms = safeArray(
     d.searchTerms ||
     d.terms ||
     d.results ||
-    (Array.isArray(d) ? d : []);
-
-  if (!Array.isArray(terms)) return [];
+    (Array.isArray(d) ? d : [])
+  );
 
   // Deduplicate by query, summing mentions
   const seen = new Map();
   terms.forEach((t) => {
+    if (!t) return;  // null guard
     const q = t.query || t.term || t.keyword || t.name || '';
     if (!q) return;
-    const m = t.mentions || t.count || t.frequency ||
-      (t.aiSearchEngines ? t.aiSearchEngines.length : 0);
+    // Use Array.isArray() guard to prevent .length crash (F9)
+    const m = safeNum(
+      t.mentions ?? t.count ?? t.frequency ??
+      (Array.isArray(t.aiSearchEngines) ? t.aiSearchEngines.length : 0)
+    );
     seen.set(q, (seen.get(q) || 0) + m);
   });
 
@@ -494,6 +603,8 @@ function normalizeSearchTerms(raw) {
  * Returns top 3 with delta vs brand visibility.
  *
  * Format: "CompetitorName: Score [±X% vs us]"
+ *
+ * Fixes F4: guards against Infinity delta when score or brandScore is 0.
  */
 function normalizeCompetitors(competitorsRaw, brandScore) {
   if (!Array.isArray(competitorsRaw) || competitorsRaw.length === 0) {
@@ -501,24 +612,18 @@ function normalizeCompetitors(competitorsRaw, brandScore) {
   }
 
   return competitorsRaw
-    .filter((c) => !c.isOwnBrand)  // exclude own brand from list
+    .filter((c) => c && !c.isOwnBrand)  // null guard + exclude own brand
     .map((c) => {
-      const name =
-        c.name || c.brandName || c.competitor || 'Unknown';
-      const score =
-        c.latestValue ??
-        c.visibilityScore ??
-        c.score ??
-        c.geoScore ??
-        c.visibility ??
-        0;
+      const name = c.name || c.brandName || c.competitor || 'Unknown';
+      const score = safeNum(
+        c.latestValue ?? c.visibilityScore ?? c.score ?? c.geoScore ?? c.visibility
+      );
       // Delta: how much AHEAD (+) or BEHIND (-) we are vs competitor
       // (brand - competitor) / competitor * 100
+      // Guard: skip if either side is 0 or null to avoid Infinity/NaN (F4)
       let delta = null;
-      if (score > 0 && brandScore != null) {
-        delta = Math.round(
-          ((brandScore - score) / score) * 100
-        );
+      if (score > 0 && brandScore != null && brandScore > 0) {
+        delta = Math.round(((brandScore - score) / score) * 100);
       }
       return { name, score, delta };
     })
@@ -896,6 +1001,21 @@ async function runDiscoverBrands(apiKey) {
 }
 
 // ─── Main Orchestrator ────────────────────────────────────
+/**
+ * Main entry point — resolves credentials, fetches all 4 endpoints
+ * in parallel with individual error handling, normalizes responses,
+ * interprets insights, and renders the report.
+ *
+ * Fixes F7/F8: standalone citations + sentiment fetches with fallback
+ * to report-embedded values when the dedicated endpoints fail.
+ *
+ * @param {object} [args={}]
+ * @param {string} [args.apiKey]
+ * @param {string} [args.brandId]
+ * @param {string} [args.brandName]
+ * @param {boolean} [args.discoverBrands]
+ * @returns {Promise<{data: object, insights: object[], competitors: object[]}>}
+ */
 async function run(args = {}) {
   const { apiKey, brandId: rawBrandId } = resolveCredentials(args);
 
@@ -930,50 +1050,41 @@ async function run(args = {}) {
     }
   }
 
-  // Fetch main report + search terms in parallel
-  let reportRaw, searchTermsRaw;
+  // Fetch all 4 endpoints in parallel with individual error handling.
+  // Report errors still call handleFetchError() for auth/not-found handling.
+  // Citations and sentiment silently fall back to null (report-embedded values used).
+  // Search terms fall back to the raw endpoint, then null.
+  const [reportRaw, citationsRaw, sentimentRaw, searchTermsRaw] =
+    await Promise.all([
+      fetchReport(apiKey, brandId).catch((err) => {
+        handleFetchError(err, 'report');
+        if (err instanceof NotFoundError) {
+          console.error(
+            '\n  Tip: Run brand discovery to find valid brand IDs:'
+          );
+          console.error(
+            `  RANKSCALE_API_KEY=${apiKey} ` +
+              'node rankscale-skill.js --discover-brands'
+          );
+        }
+        return null;
+      }),
+      fetchCitations(apiKey, brandId).catch(() => null),
+      fetchSentiment(apiKey, brandId).catch(() => null),
+      fetchSearchTermsReport(apiKey, brandId)
+        .catch(() =>
+          fetchSearchTerms(apiKey, brandId).catch(() => null)
+        ),
+    ]);
 
-  try {
-    reportRaw = await fetchReport(apiKey, brandId);
-  } catch (err) {
-    handleFetchError(err, 'report');
-    if (err instanceof NotFoundError) {
-      console.error(
-        '\n  Tip: Run brand discovery to find valid brand IDs:'
-      );
-      console.error(
-        `  RANKSCALE_API_KEY=${apiKey} ` +
-          'node rankscale-skill.js --discover-brands'
-      );
-    }
-    reportRaw = {};
-  }
-
-  try {
-    searchTermsRaw = await fetchSearchTermsReport(apiKey, brandId);
-  } catch (_err) {
-    // Fallback to raw search terms endpoint
-    try {
-      searchTermsRaw = await fetchSearchTerms(apiKey, brandId);
-    } catch (_err2) {
-      searchTermsRaw = {};
-    }
-  }
-
-  // Normalize report (may contain bundled citations/sentiment)
+  // Normalize report (may contain bundled citations/sentiment as fallback)
   const reportNorm = normalizeReport(reportRaw);
 
-  // Extract citations + sentiment (from report or standalone fallback)
-  const citationsData =
-    reportNorm._citationsRaw ||
-    reportRaw.citations ||
-    reportRaw.citationData ||
-    {};
-  const sentimentData =
-    reportNorm._sentimentRaw ||
-    reportRaw.sentiment ||
-    reportRaw.sentimentData ||
-    {};
+  // Citations: prefer standalone endpoint, fallback to report-embedded
+  const citationsData = citationsRaw || reportNorm._citationsRaw || {};
+
+  // Sentiment: prefer standalone endpoint, fallback to report-embedded synthetic
+  const sentimentData = sentimentRaw || reportNorm._sentimentRaw || {};
 
   // Normalize competitors
   const competitors = normalizeCompetitors(
@@ -1067,17 +1178,29 @@ if (require.main === module) {
 module.exports = {
   run,
   resolveCredentials,
+  // API calls
   fetchBrands,
   fetchReport,
+  fetchCitations,
+  fetchSentiment,
   fetchSearchTermsReport,
   fetchSearchTerms,
+  // Normalizers
   normalizeSentiment,
   normalizeCitations,
   normalizeReport,
   normalizeSearchTerms,
   normalizeCompetitors,
+  emptyReport,
+  // Helpers
+  safeGet,
+  safeNum,
+  safeFixed,
+  safeArray,
+  // Interpretation
   interpretGeoData,
   GEO_RULES,
+  // Errors
   AuthError,
   NotFoundError,
   ApiError,
