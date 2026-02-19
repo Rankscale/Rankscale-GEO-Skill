@@ -18,8 +18,8 @@ const path = require('path');
 const fs = require('fs');
 
 // ─── Config ──────────────────────────────────────────────
-const API_BASE = 'https://app.rankscale.ai/api';
-const API_VERSION = 'v1';
+const API_BASE =
+  'https://us-central1-rankscale-2e08e.cloudfunctions.net';
 const WIDTH = 55;
 const MAX_RETRIES = 3;
 const BACKOFF_BASE_MS = 1000;
@@ -51,24 +51,32 @@ function extractBrandIdFromKey(apiKey) {
 }
 
 // ─── HTTP Client ─────────────────────────────────────────
-function apiRequest(endpoint, apiKey, retries = 0) {
+/**
+ * @param {string} endpoint  - function name e.g. 'metricsV1Report'
+ * @param {string} apiKey
+ * @param {string} method    - 'GET' or 'POST'
+ * @param {object|null} body - POST body (will be JSON-encoded)
+ * @param {number} retries
+ */
+function apiRequest(endpoint, apiKey, method = 'GET', body = null, retries = 0) {
   return new Promise((resolve, reject) => {
-    const url = `${API_BASE}/${API_VERSION}/${endpoint}`;
-    const options = {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'User-Agent': 'openclaw-rs-geo-analytics/1.0.0',
-      },
+    const url = `${API_BASE}/${endpoint}`;
+    const bodyStr = body ? JSON.stringify(body) : null;
+    const headers = {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'User-Agent': 'openclaw-rs-geo-analytics/1.0.0',
     };
+    if (bodyStr) {
+      headers['Content-Length'] = Buffer.byteLength(bodyStr);
+    }
 
     const parsed = new URL(url);
     const reqOptions = {
       hostname: parsed.hostname,
       path: parsed.pathname + parsed.search,
-      method: options.method,
-      headers: options.headers,
+      method,
+      headers,
     };
 
     const req = https.request(reqOptions, (res) => {
@@ -82,7 +90,7 @@ function apiRequest(endpoint, apiKey, retries = 0) {
             Math.random() * 500;
           setTimeout(
             () =>
-              apiRequest(endpoint, apiKey, retries + 1)
+              apiRequest(endpoint, apiKey, method, body, retries + 1)
                 .then(resolve)
                 .catch(reject),
             delay
@@ -103,7 +111,10 @@ function apiRequest(endpoint, apiKey, retries = 0) {
         if (res.statusCode === 404) {
           reject(
             new NotFoundError(
-              `Resource not found: ${endpoint} (HTTP 404)`
+              `Brand ID not found (HTTP 404). ` +
+                `Run brand discovery to find valid IDs:\n` +
+                `  RANKSCALE_API_KEY=xxx ` +
+                `node rankscale-skill.js --discover-brands`
             )
           );
           return;
@@ -115,7 +126,7 @@ function apiRequest(endpoint, apiKey, retries = 0) {
               BACKOFF_BASE_MS * Math.pow(2, retries);
             setTimeout(
               () =>
-                apiRequest(endpoint, apiKey, retries + 1)
+                apiRequest(endpoint, apiKey, method, body, retries + 1)
                   .then(resolve)
                   .catch(reject),
               delay
@@ -145,7 +156,7 @@ function apiRequest(endpoint, apiKey, retries = 0) {
     req.setTimeout(15000, () => {
       req.destroy();
       if (retries < MAX_RETRIES) {
-        apiRequest(endpoint, apiKey, retries + 1)
+        apiRequest(endpoint, apiKey, method, body, retries + 1)
           .then(resolve)
           .catch(reject);
       } else {
@@ -158,7 +169,7 @@ function apiRequest(endpoint, apiKey, retries = 0) {
         const delay = BACKOFF_BASE_MS * Math.pow(2, retries);
         setTimeout(
           () =>
-            apiRequest(endpoint, apiKey, retries + 1)
+            apiRequest(endpoint, apiKey, method, body, retries + 1)
               .then(resolve)
               .catch(reject),
           delay
@@ -170,6 +181,9 @@ function apiRequest(endpoint, apiKey, retries = 0) {
       }
     });
 
+    if (bodyStr) {
+      req.write(bodyStr);
+    }
     req.end();
   });
 }
@@ -196,44 +210,42 @@ class ApiError extends Error {
 
 // ─── API Calls ────────────────────────────────────────────
 
-/** GET /v1/metrics/brands — list brands on this account */
+/** GET /metricsV1Brands — list brands on this account */
 async function fetchBrands(apiKey) {
-  return apiRequest('metrics/brands', apiKey);
+  return apiRequest('metricsV1Brands', apiKey, 'GET');
 }
 
-/** GET /v1/metrics/report?brandId=<id> — visibility score + rank */
+/** POST /metricsV1Report — visibility score, rank, competitors */
 async function fetchReport(apiKey, brandId) {
-  return apiRequest(`metrics/report?brandId=${brandId}`, apiKey);
+  return apiRequest('metricsV1Report', apiKey, 'POST', { brandId });
 }
 
-/** GET /v1/metrics/citations?brandId=<id> — citation data */
-async function fetchCitations(apiKey, brandId) {
-  return apiRequest(
-    `metrics/citations?brandId=${brandId}`,
-    apiKey
-  );
+/** POST /metricsV1SearchTermsReport — top queries with detection */
+async function fetchSearchTermsReport(apiKey, brandId) {
+  return apiRequest('metricsV1SearchTermsReport', apiKey, 'POST', { brandId });
 }
 
-/** GET /v1/metrics/sentiment?brandId=<id> — sentiment breakdown */
-async function fetchSentiment(apiKey, brandId) {
-  return apiRequest(
-    `metrics/sentiment?brandId=${brandId}`,
-    apiKey
-  );
-}
-
-/** GET /v1/metrics/search-terms-report?brandId=<id> — top queries */
+/** POST /metricsV1SearchTerms — raw search terms */
 async function fetchSearchTerms(apiKey, brandId) {
-  return apiRequest(
-    `metrics/search-terms-report?brandId=${brandId}`,
-    apiKey
-  );
+  return apiRequest('metricsV1SearchTerms', apiKey, 'POST', { brandId });
+}
+
+// ─── Brands Normalization ─────────────────────────────────
+/** Extract brands array from API response (handles envelope) */
+function normalizeBrands(raw) {
+  if (!raw) return [];
+  // Real API: { success: true, data: { brands: [...] } }
+  const d = raw.data || raw;
+  if (d.brands) return d.brands;
+  if (Array.isArray(d)) return d;
+  // Fallback: maybe data itself is the brands array
+  return [];
 }
 
 // ─── Brand Discovery ─────────────────────────────────────
 async function discoverBrandId(apiKey, brandName) {
-  const data = await fetchBrands(apiKey);
-  const brands = data.brands || data.data || data || [];
+  const raw = await fetchBrands(apiKey);
+  const brands = normalizeBrands(raw);
 
   if (!Array.isArray(brands) || brands.length === 0) {
     throw new NotFoundError(
@@ -329,52 +341,189 @@ function normalizeCitations(raw) {
 
 /**
  * Normalize report response.
- * Handles: { score, rank, change } or { geoScore, rankPosition, weeklyDelta }
+ *
+ * Real API response shape (metricsV1Report):
+ *   { data: {
+ *       ownBrandMetrics: {
+ *         visibilityScore, detectionRate, sentiment, citations,
+ *         trends: { visibilityScore },
+ *         engineMetricsData: { daily: [{engineId, engineName, visibilityScore:[...]}] }
+ *       },
+ *       competitorMetrics: [{name, visibilityScore, latestValue}]
+ *     }
+ *   }
+ *
+ * Also handles legacy flat format: { score, rank, change }
  */
 function normalizeReport(raw) {
-  if (!raw) return { score: 0, rank: null, change: 0 };
+  if (!raw) {
+    return {
+      score: 0, rank: null, change: 0,
+      brandName: 'Your Brand', detectionRate: null,
+      engines: {}, competitors: [],
+    };
+  }
+
+  // Unwrap API envelope if present
+  const d = raw.data || raw;
+  const own = d.ownBrandMetrics || d;
+  const competitorsRaw = d.competitorMetrics || raw.competitors || [];
+
+  // Build per-engine map using the most recent value of each engine
+  const engineEntries = own.engineMetricsData || {};
+  const engineDaily = (
+    engineEntries.daily ||
+    engineEntries.weekly ||
+    []
+  );
+  const engines = {};
+  engineDaily.forEach((e) => {
+    const scores = e.visibilityScore || [];
+    if (scores.length > 0) {
+      const label = e.engineName || e.engineId || 'unknown';
+      // Use the last (most recent) score
+      engines[label] = scores[scores.length - 1];
+    }
+  });
+
+  // Detection rate
+  const detectionRate =
+    own.detectionRate ??
+    raw.detectionRate ??
+    null;
+
+  // Sentiment — API returns a single composite number (0–100)
+  // We synthesize positive/negative from it for compatibility
+  const sentimentScore = own.sentiment ?? raw.sentiment ?? null;
+
+  // Score change from trends
+  const change =
+    (own.trends && own.trends.visibilityScore != null
+      ? own.trends.visibilityScore
+      : null) ??
+    raw.change ?? raw.weeklyDelta ?? raw.delta ?? 0;
+
   return {
     score:
+      own.visibilityScore ??
+      own.score ??
       raw.score ??
       raw.geoScore ??
-      raw.visibilityScore ??
-      raw.geo_score ??
       0,
     rank:
+      own.rank ??
       raw.rank ??
-      raw.rankPosition ??
-      raw.position ??
       null,
-    change:
-      raw.change ??
-      raw.weeklyDelta ??
-      raw.delta ??
-      raw.scoreChange ??
-      0,
+    change: +(change).toFixed(1),
     brandName:
+      own.brandName ??
       raw.brandName ??
       raw.brand ??
-      raw.name ??
       'Your Brand',
+    detectionRate:
+      detectionRate != null ? +detectionRate.toFixed(1) : null,
+    engines,
+    competitors: competitorsRaw,
+    // Stash raw citation + sentiment values for downstream normalization
+    _citationsRaw: {
+      count: own.citations ?? 0,
+      // Use detectionRate as the citation rate proxy (both measure presence)
+      rate: own.detectionRate ?? own.citations ?? 0,
+    },
+    _sentimentRaw:
+      sentimentScore != null
+        ? buildSentimentFromScore(sentimentScore)
+        : null,
   };
 }
 
 /**
+ * Convert a composite sentiment score (0–100) to pos/neu/neg breakdown.
+ * High sentiment → more positive; low → more negative.
+ */
+function buildSentimentFromScore(score) {
+  // score = 0–100, treat as "positive sentiment %"
+  const positive = Math.min(100, Math.max(0, +score.toFixed(1)));
+  // Model: pos + neu + neg = 100, neg is roughly 100 - score scaled
+  const negative = Math.max(0, +(((100 - positive) * 0.3)).toFixed(1));
+  const neutral = +(100 - positive - negative).toFixed(1);
+  return { positive, negative, neutral };
+}
+
+/**
  * Normalize search terms.
- * Handles: { terms: [{query, mentions}] } or { data: [{term, count}] }
+ *
+ * Real API response shape (metricsV1SearchTermsReport):
+ *   { data: { timeFrame, searchTerms: [{searchTermId, query, ...}] } }
+ *
+ * Also handles legacy: { terms: [{query, mentions}] }
  */
 function normalizeSearchTerms(raw) {
   if (!raw) return [];
+
+  // Unwrap API envelope
+  const d = raw.data || raw;
+
+  // Real API format
   const terms =
-    raw.terms || raw.data || raw.searchTerms || raw.results || [];
-  return terms
-    .map((t) => ({
-      query: t.query || t.term || t.keyword || t.name || '',
-      mentions: t.mentions || t.count || t.frequency || 0,
-    }))
-    .filter((t) => t.query)
+    d.searchTerms ||
+    d.terms ||
+    d.results ||
+    (Array.isArray(d) ? d : []);
+
+  if (!Array.isArray(terms)) return [];
+
+  // Deduplicate by query, summing mentions
+  const seen = new Map();
+  terms.forEach((t) => {
+    const q = t.query || t.term || t.keyword || t.name || '';
+    if (!q) return;
+    const m = t.mentions || t.count || t.frequency ||
+      (t.aiSearchEngines ? t.aiSearchEngines.length : 0);
+    seen.set(q, (seen.get(q) || 0) + m);
+  });
+
+  return Array.from(seen.entries())
+    .map(([query, mentions]) => ({ query, mentions }))
     .sort((a, b) => b.mentions - a.mentions)
     .slice(0, 10);
+}
+
+/**
+ * Normalize competitors array from report.
+ * Returns top 3 with delta vs brand visibility.
+ *
+ * Format: "CompetitorName: Score [±X% vs us]"
+ */
+function normalizeCompetitors(competitorsRaw, brandScore) {
+  if (!Array.isArray(competitorsRaw) || competitorsRaw.length === 0) {
+    return [];
+  }
+
+  return competitorsRaw
+    .filter((c) => !c.isOwnBrand)  // exclude own brand from list
+    .map((c) => {
+      const name =
+        c.name || c.brandName || c.competitor || 'Unknown';
+      const score =
+        c.latestValue ??
+        c.visibilityScore ??
+        c.score ??
+        c.geoScore ??
+        c.visibility ??
+        0;
+      // Delta: how much AHEAD (+) or BEHIND (-) we are vs competitor
+      // (brand - competitor) / competitor * 100
+      let delta = null;
+      if (score > 0 && brandScore != null) {
+        delta = Math.round(
+          ((brandScore - score) / score) * 100
+        );
+      }
+      return { name, score, delta };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
 }
 
 // ─── GEO Interpretation Module ───────────────────────────
@@ -459,6 +608,60 @@ const GEO_RULES = [
       '  Double down on formats producing citations.\n' +
       '  Consider expanding to adjacent topics.',
   },
+  {
+    id: 'R8',
+    name: 'Content Gap Investigation',
+    severity: 'WARN',
+    check: (data) =>
+      data.report.detectionRate != null &&
+      data.report.detectionRate < 70,
+    recommendation:
+      'Detection rate below 70% — brand not cited\n' +
+      '  in AI results for many queries.\n' +
+      '  Action: Research underrepresented topics;\n' +
+      '  create content targeting those gaps.\n' +
+      '  Timeline: 2–4 weeks to improve detection.',
+  },
+  {
+    id: 'R9',
+    name: 'Competitive Benchmark',
+    severity: 'WARN',
+    check: (data) => {
+      const comps = data.report.competitors || [];
+      if (comps.length === 0) return false;
+      const topScore = Math.max(...comps.map(
+        (c) => c.score ?? c.visibilityScore ?? c.geoScore ?? 0
+      ));
+      return topScore - data.report.score > 15;
+    },
+    recommendation:
+      'A top competitor is >15 pts ahead in\n' +
+      '  visibility. Root cause: better content,\n' +
+      '  more citations, or stronger authority.\n' +
+      '  Action: Analyze competitor content strategy;\n' +
+      '  identify differentiation opportunities.\n' +
+      '  Timeline: 4–8 weeks to close the gap.',
+  },
+  {
+    id: 'R10',
+    name: 'Engine-Specific Optimization',
+    severity: 'WARN',
+    check: (data) => {
+      const engines = data.report.engines || {};
+      const scores = Object.values(engines).filter(
+        (v) => typeof v === 'number'
+      );
+      if (scores.length < 2) return false;
+      return Math.max(...scores) - Math.min(...scores) > 30;
+    },
+    recommendation:
+      'Engine visibility spread >30 pts detected.\n' +
+      '  Root cause: Engines (e.g., ChatGPT) favor\n' +
+      '  different content signals than others.\n' +
+      '  Action: Audit top engine\'s citations/\n' +
+      '  keywords; optimize for those signals.\n' +
+      '  Timeline: 3–6 weeks.',
+  },
 ];
 
 /**
@@ -507,7 +710,28 @@ function center(str) {
   return ' '.repeat(left) + s;
 }
 
-function renderReport(data, insights, brandId) {
+function renderCompetitors(competitors, brandScore) {
+  if (!competitors || competitors.length === 0) return [];
+  const lines = [];
+  lines.push(line('-'));
+  lines.push('  COMPETITOR COMPARISON');
+  competitors.forEach((c) => {
+    const name = String(c.name).slice(0, 20);
+    const score = String(c.score).padStart(3);
+    let deltaStr = '';
+    if (c.delta != null) {
+      const sign = c.delta >= 0 ? '+' : '';
+      const flag = c.delta >= 0 ? '🟢' : '🔴';
+      deltaStr = ` ${flag} [${sign}${c.delta}% vs us]`;
+    }
+    // "  CompetitorName:  72 [+15% vs us]"
+    const row = `  ${name.padEnd(20)}: ${score}${deltaStr}`;
+    lines.push(row.slice(0, WIDTH));
+  });
+  return lines;
+}
+
+function renderReport(data, insights, brandId, competitors) {
   const { report, citations, sentiment, searchTerms } = data;
   const lines = [];
   const ts = new Date().toISOString().slice(0, 10);
@@ -543,15 +767,41 @@ function renderReport(data, insights, brandId) {
       ` | Neg ${sentiment.negative}%`
   );
 
+  if (report.detectionRate != null) {
+    lines.push(
+      `  DETECTION RATE:${String(report.detectionRate).padStart(4)}%`
+    );
+  }
+
+  // Engine breakdown
+  const engineEntries = Object.entries(report.engines || {});
+  if (engineEntries.length > 0) {
+    const engStr = engineEntries
+      .map(([k, v]) => `${k}:${v}`)
+      .join(' | ');
+    lines.push(`  ENGINES:       ${engStr.slice(0, WIDTH - 17)}`);
+  }
+
+  // Competitor comparison
+  if (competitors && competitors.length > 0) {
+    renderCompetitors(competitors, report.score).forEach((l) =>
+      lines.push(l)
+    );
+  }
+
   // Search terms
   if (searchTerms.length > 0) {
     lines.push(line('-'));
     lines.push('  TOP AI SEARCH TERMS');
     searchTerms.slice(0, 5).forEach((t, i) => {
       const num = `${i + 1}.`;
-      const q = `"${t.query}"`.slice(0, 34);
+      // trim to fit in 55 chars: "  N. "query"  (X mentions)"
+      // "  1. " = 5, num+space=3, quotes=2, mentions col needs ~15
+      // Total row: 5 + term + mentions
+      const q = `"${t.query}"`.slice(0, 30);
       const m = `(${t.mentions} mentions)`;
-      lines.push(`  ${num} ${q.padEnd(36)} ${m}`);
+      const row = `  ${num} ${q.padEnd(32)} ${m}`;
+      lines.push(row.slice(0, WIDTH));
     });
   }
 
@@ -568,9 +818,10 @@ function renderReport(data, insights, brandId) {
   }
 
   lines.push(line('-'));
-  lines.push(
-    `  Full report: https://app.rankscale.ai/brands/${brandId}`
-  );
+  // Footer: "  Full report: " = 15 chars; URL max 40 chars → total 55
+  const footerUrl =
+    `https://rankscale.ai/brands/${brandId}`.slice(0, 40);
+  lines.push(`  Full report: ${footerUrl}`);
   lines.push(line('='));
 
   return lines.join('\n');
@@ -614,6 +865,36 @@ function showOnboarding() {
   }
 }
 
+// ─── Brand Discovery CLI Mode ─────────────────────────────
+async function runDiscoverBrands(apiKey) {
+  console.log('  Fetching brands from Rankscale...\n');
+  try {
+    const raw = await fetchBrands(apiKey);
+    const brands = normalizeBrands(raw);
+    if (!Array.isArray(brands) || brands.length === 0) {
+      console.log('  No brands found on this account.');
+      return;
+    }
+    console.log(line('='));
+    console.log(center('AVAILABLE BRANDS'));
+    console.log(line('='));
+    brands.forEach((b, i) => {
+      const name = b.name || b.brandName || '(unnamed)';
+      const id = b.id || b.brandId || '?';
+      console.log(`  ${i + 1}. ${name}`);
+      console.log(`     ID: ${id}`);
+    });
+    console.log(line('-'));
+    console.log(
+      '  Set: export RANKSCALE_BRAND_ID=<id>'
+    );
+    console.log(line('='));
+  } catch (err) {
+    console.error(`  Error: ${err.message}`);
+    process.exit(1);
+  }
+}
+
 // ─── Main Orchestrator ────────────────────────────────────
 async function run(args = {}) {
   const { apiKey, brandId: rawBrandId } = resolveCredentials(args);
@@ -621,6 +902,12 @@ async function run(args = {}) {
   if (!apiKey) {
     showOnboarding();
     process.exit(1);
+  }
+
+  // Brand discovery CLI mode
+  if (args.discoverBrands) {
+    await runDiscoverBrands(apiKey);
+    return;
   }
 
   let brandId = rawBrandId;
@@ -643,34 +930,62 @@ async function run(args = {}) {
     }
   }
 
-  // Parallel fetch (report first, then the rest)
-  let reportRaw, citationsRaw, sentimentRaw, searchTermsRaw;
+  // Fetch main report + search terms in parallel
+  let reportRaw, searchTermsRaw;
 
   try {
     reportRaw = await fetchReport(apiKey, brandId);
   } catch (err) {
     handleFetchError(err, 'report');
+    if (err instanceof NotFoundError) {
+      console.error(
+        '\n  Tip: Run brand discovery to find valid brand IDs:'
+      );
+      console.error(
+        `  RANKSCALE_API_KEY=${apiKey} ` +
+          'node rankscale-skill.js --discover-brands'
+      );
+    }
     reportRaw = {};
   }
 
   try {
-    [citationsRaw, sentimentRaw, searchTermsRaw] = await Promise.all([
-      fetchCitations(apiKey, brandId),
-      fetchSentiment(apiKey, brandId),
-      fetchSearchTerms(apiKey, brandId),
-    ]);
-  } catch (err) {
-    handleFetchError(err, 'supplementary data');
-    citationsRaw = {};
-    sentimentRaw = {};
-    searchTermsRaw = {};
+    searchTermsRaw = await fetchSearchTermsReport(apiKey, brandId);
+  } catch (_err) {
+    // Fallback to raw search terms endpoint
+    try {
+      searchTermsRaw = await fetchSearchTerms(apiKey, brandId);
+    } catch (_err2) {
+      searchTermsRaw = {};
+    }
   }
 
-  // Normalize
+  // Normalize report (may contain bundled citations/sentiment)
+  const reportNorm = normalizeReport(reportRaw);
+
+  // Extract citations + sentiment (from report or standalone fallback)
+  const citationsData =
+    reportNorm._citationsRaw ||
+    reportRaw.citations ||
+    reportRaw.citationData ||
+    {};
+  const sentimentData =
+    reportNorm._sentimentRaw ||
+    reportRaw.sentiment ||
+    reportRaw.sentimentData ||
+    {};
+
+  // Normalize competitors
+  const competitors = normalizeCompetitors(
+    reportNorm.competitors,
+    reportNorm.score
+  );
+
+  // Compose normalized data object
   const data = {
-    report: normalizeReport(reportRaw),
-    citations: normalizeCitations(citationsRaw),
-    sentiment: normalizeSentiment(sentimentRaw),
+    report: reportNorm,
+    citations: normalizeCitations(citationsData),
+    sentiment: normalizeSentiment(sentimentData),
     searchTerms: normalizeSearchTerms(searchTermsRaw),
   };
 
@@ -678,10 +993,10 @@ async function run(args = {}) {
   const insights = interpretGeoData(data);
 
   // Render
-  const output = renderReport(data, insights, brandId);
+  const output = renderReport(data, insights, brandId, competitors);
   console.log(output);
 
-  return { data, insights };
+  return { data, insights, competitors };
 }
 
 function handleFetchError(err, context) {
@@ -715,6 +1030,8 @@ if (require.main === module) {
       args.brandId = process.argv[++i];
     } else if (arg === '--brand-name' || arg === '--brandName') {
       args.brandName = process.argv[++i];
+    } else if (arg === '--discover-brands') {
+      args.discoverBrands = true;
     } else if (arg === '--help' || arg === '-h') {
       console.log([
         'Usage: node rankscale-skill.js [options]',
@@ -723,11 +1040,18 @@ if (require.main === module) {
         '  --api-key <key>      Rankscale API key',
         '  --brand-id <id>      Brand ID',
         '  --brand-name <name>  Brand name (for discovery)',
+        '  --discover-brands    List all brands on account',
         '  --help               Show this help',
         '',
         'Environment Variables:',
         '  RANKSCALE_API_KEY    API key',
         '  RANKSCALE_BRAND_ID   Brand ID',
+        '',
+        'Examples:',
+        '  RANKSCALE_API_KEY=xxx node rankscale-skill.js \\',
+        '    --discover-brands',
+        '  RANKSCALE_API_KEY=xxx RANKSCALE_BRAND_ID=yyy \\',
+        '    node rankscale-skill.js',
       ].join('\n'));
       process.exit(0);
     }
@@ -745,13 +1069,13 @@ module.exports = {
   resolveCredentials,
   fetchBrands,
   fetchReport,
-  fetchCitations,
-  fetchSentiment,
+  fetchSearchTermsReport,
   fetchSearchTerms,
   normalizeSentiment,
   normalizeCitations,
   normalizeReport,
   normalizeSearchTerms,
+  normalizeCompetitors,
   interpretGeoData,
   GEO_RULES,
   AuthError,

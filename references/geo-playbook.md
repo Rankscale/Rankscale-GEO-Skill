@@ -67,7 +67,7 @@ Week-over-week GEO score change.
 
 ## Interpretation Rules
 
-The GEO Interpretation Module applies 7 rules to generate actionable insights. Rules are checked in order. Severity levels: **CRIT**, **WARN**, **INFO**.
+The GEO Interpretation Module applies 10 rules to generate actionable insights. Rules are checked in order. Severity levels: **CRIT**, **WARN**, **INFO**.
 
 ---
 
@@ -218,6 +218,78 @@ The GEO Interpretation Module applies 7 rules to generate actionable insights. R
 | CRIT | `[CRIT]` | Immediate action required; significant brand risk |
 | WARN | `[WARN]` | Action recommended within 2–4 weeks |
 | INFO | `[INFO]` | Positive signal or informational context |
+
+---
+
+---
+
+### Rule R8 — Content Gap Investigation (WARN)
+
+**Condition:** `detectionRate < 70%`
+
+**Why it matters:** Detection rate below 70% means the brand is not being cited in AI results for a significant portion of tracked queries. These are "invisible" queries where competitors capture answer slots unchallenged.
+
+**Root causes:**
+- Brand not cited in AI results for many relevant queries
+- Content gaps in specific topic areas or query formats
+- Queries are too long-tail or niche for existing content to cover
+- AI models haven't indexed or associated the brand with these queries
+
+**Recommended Actions:**
+1. Export the full search terms report and identify queries with 0 brand mentions
+2. Cluster ungapped queries by topic/intent (informational, comparison, use-case)
+3. Create content specifically targeting the top 10 uncovered query clusters
+4. Optimize content for featured-snippet-style formatting (direct answers, bullet points)
+5. Track detection rate weekly after publishing new content
+
+**Expected Timeline:** 2–4 weeks to see detection rate improvement
+
+---
+
+### Rule R9 — Competitive Benchmark (WARN)
+
+**Condition:** Top competitor visibility score > brand visibility by more than 15 points
+
+**Why it matters:** When a competitor leads by 15+ points, they are consistently winning the answer slots the brand should occupy. This gap compounds over time as AI models reinforce citation patterns.
+
+**Root causes:**
+- Competitor has better content depth, quality, or frequency
+- Competitor earns more citations from authoritative third-party sources
+- Competitor has stronger domain authority or brand trust signals
+- Competitor's content is better structured for AI ingestion (schema, FAQs)
+
+**Recommended Actions:**
+1. Audit the top competitor's content strategy: publishing frequency, formats, topics
+2. Identify the 5 queries where they appear but your brand does not
+3. Create differentiation content: unique angles, proprietary data, original research
+4. Build citations from sources the competitor already appears on
+5. Set a 90-day gap-closing target (benchmark weekly)
+
+**Expected Timeline:** 4–8 weeks to close the gap (depending on content investment)
+
+---
+
+### Rule R10 — Engine-Specific Optimization (WARN)
+
+**Condition:** Max engine visibility score − Min engine visibility score > 30 points
+
+**Why it matters:** Different AI engines (ChatGPT, Perplexity, Gemini, Claude) favor different content signals. A 30+ point spread indicates the brand is optimized for some engines but nearly invisible in others — a major untapped opportunity.
+
+**Root causes:**
+- Some engines (e.g., ChatGPT) rely more on web crawl citations
+- Others (e.g., Perplexity) prioritize recent, well-structured sources
+- Gemini may weight Google-indexed content differently
+- Formatting, schema markup, and freshness signals vary by engine
+
+**Recommended Actions:**
+1. Identify which engine has the highest visibility (the "anchor engine")
+2. Audit what content types, formats, and sources that engine responds to
+3. Create content variations optimized for the low-performing engines
+4. For ChatGPT: focus on Wikipedia-style factual depth
+5. For Perplexity: focus on recency, structured Q&A, and cited sources
+6. Monitor per-engine breakdown weekly to track improvements
+
+**Expected Timeline:** 3–6 weeks to see engine-specific improvement
 
 ---
 
