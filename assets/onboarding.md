@@ -2,7 +2,7 @@
 
 ## No Rankscale Account Yet?
 
-**Visit:** https://app.rankscale.ai
+**Visit:** https://rankscale.ai
 
 Click **Start Free Trial** to sign up (14 days, no credit card).
 
@@ -28,16 +28,18 @@ From your Dashboard:
 Rankscale begins collecting data. Initial report: 24-48 hours.
 
 Your Brand ID appears in the brand card and dashboard URL:
-  https://app.rankscale.ai/brands/<YOUR_BRAND_ID>
+  https://rankscale.ai/brands/<YOUR_BRAND_ID>
 
 ---
 
 ## Step 2: Generate Your API Key (Settings)
 
 Go to **Settings** (bottom left sidebar) →
-**QuickCheck Integration** section
+**Integrations** section
 
-  **1. Click "Enable QuickCheck"** (if not already enabled)
+Scroll to the bottom: **REST API** box
+
+  **1. Click "Generate New Key"**
 
   **2. Copy your API Key**
      (format: `rk_...`)
