@@ -1,78 +1,75 @@
-# Rankscale GEO Analytics — Onboarding Guide
+# Rankscale GEO Analytics — First-Run Onboarding
 
-Welcome to Rankscale! This guide walks you through setting up the
-GEO Analytics skill so your AI assistant can pull live brand data.
+## No Rankscale Account Yet?
 
----------------------------------------------------------------
-  STEP 1: CREATE YOUR RANKSCALE ACCOUNT
----------------------------------------------------------------
+**Visit:** https://app.rankscale.ai
 
-Visit: https://app.rankscale.ai/signup
+Click **Start Free Trial** to sign up (14 days, no credit card).
 
-  • Click "Start Free Trial" (14 days, no credit card required)
-  • Enter your work email and set a password
-  • Verify your email address
-  • You'll land on the Rankscale dashboard
+After email verification, you'll land on your Dashboard.
 
----------------------------------------------------------------
-  STEP 2: ADD YOUR BRAND
----------------------------------------------------------------
+---
 
-From the dashboard:
+## Step 1: Add Your Brand (Dashboard)
 
-  1. Click "Add Brand" (top right)
-  2. Enter your brand name (e.g., "Acme Corp")
-  3. Enter your primary domain (e.g., "acmecorp.com")
-  4. Select your category (e.g., "SaaS / Productivity")
-  5. Add 3–5 key competitors to benchmark against
-  6. Click "Create Brand"
+From your Dashboard:
 
-Rankscale will begin collecting your GEO data. Initial report
-takes 24–48 hours to populate.
+  **1. Click "+ Add Brand"** (top right)
 
-Your Brand ID will appear in the URL:
+  **2. Fill in brand details:**
+     - Brand Name (e.g., "Acme SaaS")
+     - Domain (e.g., acmesaas.com)
+     - Description (optional)
+     - Product Names (optional)
+     - Default Country & Language
+
+  **3. Click "Create Brand"**
+
+Rankscale begins collecting data. Initial report: 24-48 hours.
+
+Your Brand ID appears in the brand card and dashboard URL:
   https://app.rankscale.ai/brands/<YOUR_BRAND_ID>
 
----------------------------------------------------------------
-  STEP 3: GET YOUR API KEY
----------------------------------------------------------------
+---
 
-  1. Go to Settings → API Keys
-     https://app.rankscale.ai/settings/api
+## Step 2: Generate Your API Key (Settings)
 
-  2. Click "Generate New Key"
+Go to **Settings** (bottom left sidebar) →
+**QuickCheck Integration** section
 
-  3. Copy your API key — it looks like:
-     rk_xxxxxxxx_<brandId>
+  **1. Click "Enable QuickCheck"** (if not already enabled)
 
-  ⚠️  The key is shown once. Save it immediately.
+  **2. Copy your API Key**
+     (format: `rk_...`)
 
----------------------------------------------------------------
-  STEP 4: CONFIGURE YOUR AI ASSISTANT
----------------------------------------------------------------
+  ⚠️  **Save this key immediately — it won't be shown again.**
 
-Set these environment variables in your shell or .env file:
+---
 
-  export RANKSCALE_API_KEY="rk_xxxxxxxx_<brandId>"
-  export RANKSCALE_BRAND_ID="<brandId>"
+## Step 3: Configure Your AI Assistant
 
-Or pass directly when running the skill:
+Set environment variables in your shell or .env:
+
+  export RANKSCALE_API_KEY="rk_..."
+  export RANKSCALE_BRAND_ID="<YOUR_BRAND_ID>"
+
+Or pass on command line:
 
   node rankscale-skill.js \
-    --api-key rk_xxxxxxxx_<brandId> \
-    --brand-id <brandId>
+    --api-key rk_... \
+    --brand-id <YOUR_BRAND_ID>
 
-To persist in your shell config (e.g., ~/.bashrc or ~/.zshrc):
+To persist in shell config (~/.bashrc, ~/.zshrc, etc.):
 
-  echo 'export RANKSCALE_API_KEY="rk_xxxxx"' >> ~/.zshrc
-  echo 'export RANKSCALE_BRAND_ID="yyyyy"' >> ~/.zshrc
+  echo 'export RANKSCALE_API_KEY="rk_..."' >> ~/.zshrc
+  echo 'export RANKSCALE_BRAND_ID="..."' >> ~/.zshrc
   source ~/.zshrc
 
----------------------------------------------------------------
-  STEP 5: RUN YOUR FIRST REPORT
----------------------------------------------------------------
+---
 
-Once credentials are set, ask your AI assistant:
+## Step 4: Test the Skill
+
+Ask your AI assistant:
 
   "Run a Rankscale GEO report"
   "Show my AI search visibility"
@@ -82,36 +79,20 @@ Or run directly:
 
   node rankscale-skill.js
 
-You'll see a full GEO Analytics report with:
-  • GEO Score (0–100)
-  • Citation Rate vs. industry average
-  • Sentiment breakdown
-  • Top AI search terms
-  • 3–5 actionable GEO insights
+You'll see your GEO Analytics report with:
+- GEO Score (0–100)
+- Citation Rate & Industry Average
+- Sentiment Breakdown
+- Top AI Search Terms
+- Actionable GEO Insights
 
----------------------------------------------------------------
-  PLANS & PRICING
----------------------------------------------------------------
+---
 
-| Plan       | Brands | Terms Tracked | Reports/day |
-|------------|--------|---------------|-------------|
-| Free Trial | 1      | 50            | 3           |
-| Starter    | 1      | 200           | 10          |
-| Pro        | 5      | 1,000         | 50          |
-| Enterprise | ∞      | Custom        | Unlimited   |
+## Questions?
 
-See full pricing: https://app.rankscale.ai/pricing
+- **Docs:** https://docs.rankscale.ai
+- **Support:** support@rankscale.ai
+- **Discord:** https://discord.gg/rankscale
 
----------------------------------------------------------------
-  NEED HELP?
----------------------------------------------------------------
-
-  • Docs:    https://docs.rankscale.ai
-  • Support: support@rankscale.ai
-  • Discord: https://discord.gg/rankscale
-  • Twitter: @rankscale
-
----------------------------------------------------------------
-
-Once you've completed setup, your AI assistant can retrieve
-live GEO analytics on demand. Just ask!
+Once configured, your AI assistant can pull live GEO analytics
+on demand. Just ask!
