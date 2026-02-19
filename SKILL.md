@@ -83,7 +83,7 @@ If missing, trigger onboarding (see `/assets/onboarding.md`).
 |---|---|
 | `rankscale-skill.js` | Main skill logic + GEO Interpretation Module |
 | `references/api-integration.md` | API endpoint specs, schemas, request examples |
-| `references/geo-playbook.md` | GEO interpretation rules + recommendation patterns |
+| `references/geo-playbook.md` | 10 GEO interpretation rules (R1–R10) + recommendation patterns |
 | `assets/onboarding.md` | Onboarding copy for new Rankscale users |
 | `scripts/validate-skill.js` | ClawhHub validation script |
 | `.skill` | ClawhHub metadata |

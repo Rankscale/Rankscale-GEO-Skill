@@ -14,7 +14,7 @@ All endpoints require Bearer token authentication.
 ```http
 GET /v1/metrics/brands HTTP/1.1
 Host: app.rankscale.ai
-Authorization: Bearer rk_mhf59qsn_61xyq5k2h3r
+Authorization: Bearer rk_YOUR_API_KEY_HERE
 Content-Type: application/json
 User-Agent: openclaw-rs-geo-analytics/1.0.0
 ```
@@ -25,9 +25,11 @@ User-Agent: openclaw-rs-geo-analytics/1.0.0
 rk_<hash>_<brandId>
 ```
 
+Replace `<hash>` and `<brandId>` with your actual credentials.
+
 - `rk_` — static prefix  
-- `<hash>` — 8-char alphanumeric token hash  
-- `<brandId>` — brand identifier (same as `RANKSCALE_BRAND_ID`)
+- `<hash>` — 8-char alphanumeric token hash (example: `YOUR_API_KEY_HERE`)
+- `<brandId>` — brand identifier (example: `YOUR_BRAND_ID_HERE`)
 
 The brand ID can be extracted from the API key automatically.
 
@@ -42,7 +44,7 @@ List all brands associated with this API key.
 **Request:**
 ```http
 GET /v1/metrics/brands
-Authorization: Bearer rk_mhf59qsn_61xyq5k2h3r
+Authorization: Bearer rk_YOUR_API_KEY_HERE
 ```
 
 **Response (200):**
@@ -50,7 +52,7 @@ Authorization: Bearer rk_mhf59qsn_61xyq5k2h3r
 {
   "brands": [
     {
-      "id": "61xyq5k2h3r",
+      "id": "YOUR_BRAND_ID_HERE",
       "name": "Rankscale",
       "domain": "rankscale.ai",
       "createdAt": "2025-09-01T00:00:00Z",
@@ -77,8 +79,8 @@ Get the GEO visibility score and rank for a brand.
 
 **Request:**
 ```http
-GET /v1/metrics/report?brandId=61xyq5k2h3r
-Authorization: Bearer rk_mhf59qsn_61xyq5k2h3r
+GET /v1/metrics/report?brandId=YOUR_BRAND_ID_HERE
+Authorization: Bearer rk_YOUR_API_KEY_HERE
 ```
 
 **Query Parameters:**
@@ -91,7 +93,7 @@ Authorization: Bearer rk_mhf59qsn_61xyq5k2h3r
 **Response (200):**
 ```json
 {
-  "brandId": "61xyq5k2h3r",
+  "brandId": "YOUR_BRAND_ID_HERE",
   "brandName": "Rankscale",
   "score": 72,
   "rank": 3,
@@ -135,8 +137,8 @@ Get citation count, rate, and top sources for a brand.
 
 **Request:**
 ```http
-GET /v1/metrics/citations?brandId=61xyq5k2h3r
-Authorization: Bearer rk_mhf59qsn_61xyq5k2h3r
+GET /v1/metrics/citations?brandId=YOUR_BRAND_ID_HERE
+Authorization: Bearer rk_YOUR_API_KEY_HERE
 ```
 
 **Query Parameters:**
@@ -150,7 +152,7 @@ Authorization: Bearer rk_mhf59qsn_61xyq5k2h3r
 **Response (200):**
 ```json
 {
-  "brandId": "61xyq5k2h3r",
+  "brandId": "YOUR_BRAND_ID_HERE",
   "count": 847,
   "rate": 34,
   "industryAvg": 28,
@@ -197,14 +199,14 @@ Get AI-generated sentiment breakdown for brand mentions.
 
 **Request:**
 ```http
-GET /v1/metrics/sentiment?brandId=61xyq5k2h3r
-Authorization: Bearer rk_mhf59qsn_61xyq5k2h3r
+GET /v1/metrics/sentiment?brandId=YOUR_BRAND_ID_HERE
+Authorization: Bearer rk_YOUR_API_KEY_HERE
 ```
 
 **Response Format A (float 0–1):**
 ```json
 {
-  "brandId": "61xyq5k2h3r",
+  "brandId": "YOUR_BRAND_ID_HERE",
   "positive": 0.61,
   "neutral": 0.29,
   "negative": 0.10,
@@ -216,7 +218,7 @@ Authorization: Bearer rk_mhf59qsn_61xyq5k2h3r
 **Response Format B (nested scores, 0–100):**
 ```json
 {
-  "brandId": "61xyq5k2h3r",
+  "brandId": "YOUR_BRAND_ID_HERE",
   "scores": {
     "pos": 61,
     "neu": 29,
@@ -249,8 +251,8 @@ Get top search queries where this brand is cited in AI answers.
 
 **Request:**
 ```http
-GET /v1/metrics/search-terms-report?brandId=61xyq5k2h3r
-Authorization: Bearer rk_mhf59qsn_61xyq5k2h3r
+GET /v1/metrics/search-terms-report?brandId=YOUR_BRAND_ID_HERE
+Authorization: Bearer rk_YOUR_API_KEY_HERE
 ```
 
 **Query Parameters:**
@@ -264,7 +266,7 @@ Authorization: Bearer rk_mhf59qsn_61xyq5k2h3r
 **Response (200):**
 ```json
 {
-  "brandId": "61xyq5k2h3r",
+  "brandId": "YOUR_BRAND_ID_HERE",
   "terms": [
     {
       "query": "best ai rank tracker",
@@ -341,8 +343,8 @@ Retry-After: 30
 ### cURL — Full Report
 
 ```bash
-API_KEY="rk_mhf59qsn_61xyq5k2h3r"
-BRAND_ID="61xyq5k2h3r"
+API_KEY="rk_YOUR_API_KEY_HERE"
+BRAND_ID="YOUR_BRAND_ID_HERE"
 BASE="https://app.rankscale.ai/api/v1"
 
 # GEO Score
@@ -365,8 +367,8 @@ curl -H "Authorization: Bearer $API_KEY" \
 ### Node.js — Minimal Client
 
 ```js
-const apiKey = process.env.RANKSCALE_API_KEY;
-const brandId = process.env.RANKSCALE_BRAND_ID;
+const apiKey = process.env.RANKSCALE_API_KEY;  // rk_YOUR_API_KEY_HERE
+const brandId = process.env.RANKSCALE_BRAND_ID;  // YOUR_BRAND_ID_HERE
 const base = 'https://app.rankscale.ai/api/v1';
 
 async function get(path) {
