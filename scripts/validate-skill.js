@@ -276,9 +276,9 @@ function validateMainSkill() {
     // GEO_RULES validation
     if (Array.isArray(skill.GEO_RULES)) {
       check(
-        'GEO_RULES has 7 rules',
-        skill.GEO_RULES.length === 7,
-        `Expected 7 rules, found ${skill.GEO_RULES.length}`
+        'GEO_RULES has 10 rules',
+        skill.GEO_RULES.length === 10,
+        `Expected 10 rules, found ${skill.GEO_RULES.length}`
       );
 
       skill.GEO_RULES.forEach((rule, i) => {
@@ -482,10 +482,10 @@ function validateReferences() {
   );
 
   check(
-    'geo-playbook.md has all 7 rules',
+    'geo-playbook.md has all 10 rules',
     fileContains('references/geo-playbook.md', 'Rule R1') &&
-      fileContains('references/geo-playbook.md', 'Rule R7'),
-    'Must document all 7 interpretation rules (R1–R7)'
+      fileContains('references/geo-playbook.md', 'Rule R10'),
+    'Must document all 10 interpretation rules (R1–R10)'
   );
 
   check(

@@ -2,7 +2,7 @@
   "id": "rs-geo-analytics",
   "name": "Rankscale GEO Analytics",
   "version": "1.0.0",
-  "description": "Fetch and interpret Rankscale GEO (Generative Engine Optimization) analytics. Pulls brand visibility score, citation rate, sentiment, and top AI search terms. Generates actionable GEO insights using 7 interpretation rules.",
+  "description": "Fetch and interpret Rankscale GEO (Generative Engine Optimization) analytics. Pulls brand visibility score, citation rate, sentiment, and top AI search terms. Generates actionable GEO insights using 10 interpretation rules.",
   "author": "sonicClaw@rankscale.ai",
   "brand": "Rankscale",
   "ticket": "RS-126",
