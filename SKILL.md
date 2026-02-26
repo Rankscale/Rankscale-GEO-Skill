@@ -1,136 +1,282 @@
-# rs-geo-analytics — Rankscale GEO Analytics Skill
+# RS-Skill — Rankscale GEO Analytics for OpenClaw
 
-**Skill ID:** rs-geo-analytics  
-**Version:** 1.0.0  
-**Brand:** Rankscale  
-**Ticket:** RS-126
+**The best generative engine optimization and AI rank tracking for ChatGPT, Perplexity, Gemini, Claude, DeepSeek, Mistral, and more.**
 
 ---
 
 ## Overview
 
-This skill connects to the Rankscale API to retrieve and interpret GEO (Generative Engine Optimization) analytics data for a brand. It fetches visibility reports, citation analysis, sentiment breakdowns, and top search terms — then transforms raw metrics into actionable recommendations using the GEO Interpretation Module.
+RS-Skill connects OpenClaw to the Rankscale API, bringing your brand's AI search performance directly into your assistant. Get visibility scores, reputation analysis, content gap reports, citation intelligence, and more — all in one place.
+
+Ask your assistant questions like:
+- _"How is my brand performing across AI engines?"_
+- _"Where are my content gaps this week?"_
+- _"Find PR opportunities for my brand."_
+- _"What's our reputation score and what's dragging it down?"_
+- _"Which AI engines am I losing ground on?"_
 
 ---
 
-## Trigger Patterns
+## Quick Start (3 Steps)
 
-The assistant should invoke this skill when a user says anything matching:
+**Step 1 — Create a Rankscale Account**
+Sign up at [rankscale.ai](https://rankscale.ai) and set up your brand profile.
 
+**Step 2 — Activate REST API Access**
+Email `support@rankscale.ai` with the subject: _"Please activate REST API access"_
+You'll receive your API Key and Brand ID within 24 hours.
+
+**Step 3 — Set Environment Variables**
+Add to your OpenClaw Gateway config:
 ```
-rankscale [show|get|pull|fetch|run|check|analyze|report]?
-geo analytics [for <brand>]?
-geo report [for <brand>]?
-show my ai visibility
-check ai search rankings
-how is <brand> performing in ai search
-what's my geo score
-rankscale report
-brand visibility report
-citation analysis [for <brand>]?
-sentiment analysis [for <brand>]? [ai|geo]?
-ai search terms [for <brand>]?
-show search term report
-geo insights [for <brand>]?
-what is my brand score
-how often is [<brand>] cited in ai
-```
-
-### Example Invocations
-
-- "Run a Rankscale GEO report for Acme Corp"
-- "Show my AI search visibility"
-- "What's my geo score?"
-- "Pull a citation analysis"
-- "How is Rankscale performing in AI search?"
-- "Give me GEO insights"
-- "Check my brand sentiment in AI answers"
-
----
-
-## Credentials
-
-| Variable | Source | Description |
-|---|---|---|
-| `RANKSCALE_API_KEY` | env / user config | API key (format: `rk_<hash>_<brandid>`) |
-| `RANKSCALE_BRAND_ID` | env / user config | Brand ID string |
-
-If missing, trigger onboarding (see `/assets/onboarding.md`).
-
----
-
-## Skill Flow
-
-```
-1. Validate credentials
-2. If missing → onboarding prompt
-3. If brand ID unknown → brand discovery (/v1/metrics/brands)
-4. Sequential API calls:
-   a. /v1/metrics/report        → visibility score + rank
-   b. /v1/metrics/citations     → citation count + sources
-   c. /v1/metrics/sentiment     → positive/negative/neutral %
-   d. /v1/metrics/search-terms-report → top queries where brand appears
-5. Normalize + transform data
-6. Run GEO Interpretation Module
-7. Render ASCII output (55-char width, mobile-compatible)
+RANKSCALE_API_KEY=rk_...
+RANKSCALE_BRAND_ID=...
 ```
 
----
+Then run: `node rankscale-skill.js --discover-brands` to verify your setup.
 
-## File References
-
-| File | Purpose |
-|---|---|
-| `rankscale-skill.js` | Main skill logic + GEO Interpretation Module |
-| `references/api-integration.md` | API endpoint specs, schemas, request examples |
-| `references/geo-playbook.md` | 10 GEO interpretation rules (R1–R10) + recommendation patterns |
-| `assets/onboarding.md` | Onboarding copy for new Rankscale users |
-| `scripts/validate-skill.js` | ClawhHub validation script |
-| `.skill` | ClawhHub metadata |
+> **Tip:** If your API key has the format `rk_<hash>_<brandId>`, the Brand ID is automatically extracted — no separate config needed.
 
 ---
 
-## Output Format
+## Features
 
-All output is ASCII, max 55 chars wide, mobile-compatible.  
-No markdown tables. Sections separated by `-------`.
+| Feature | Description | CLI Flag |
+|---------|-------------|----------|
+| **GEO Overview** | Full visibility report + search terms breakdown | _(default)_ |
+| **Engine Strength Profile** | Visibility spread across all tracked AI engines | `--engine-profile` |
+| **Content Gap Analysis** | Topics and queries where your brand has low visibility | `--gap-analysis` |
+| **Reputation Score** | Sentiment-based 0–100 brand health score | `--reputation` |
+| **Engine Gainers & Losers** | Top movers vs prior period, per engine | `--engine-movers` |
+| **Sentiment Shift Alert** | Trend detection + risk flags for sentiment changes | `--sentiment-alerts` |
+| **Citation Intelligence** | Authority ranking, gap analysis, engine preferences, PR targets | `--citations` |
 
-Example:
+---
+
+## Real Example Prompts
+
+These prompts work out-of-the-box with RS-Skill connected to OpenClaw:
+
+**1. Daily brand health check**
+> _"Give me my Rankscale GEO overview for this week."_
+
+**2. Engine-specific strategy**
+> _"Which AI engines am I weakest on? Show me my engine strength profile."_
+
+**3. Content planning**
+> _"What topics should I be writing about? Run a content gap analysis."_
+
+**4. PR campaign prep**
+> _"Find citation gaps vs my competitors and suggest PR targets."_
+```
+node rankscale-skill.js --citations full
+```
+
+**5. Reputation monitoring**
+> _"Is our brand reputation improving or declining? Any risk areas?"_
+
+---
+
+## Usage Examples
+
+### GEO Overview (default)
+
+```
+node rankscale-skill.js
+```
+
+Sample output (healthy brand):
 ```
 =======================================================
-  RANKSCALE GEO REPORT
-  Brand: Acme Corp | 2026-02-19
+                 RANKSCALE GEO REPORT
+             Brand: AcmeCorp | 2026-02-19
 =======================================================
-  GEO SCORE:     72 / 100   [+3 vs last week]
-  CITATION RATE: 34%        [Industry avg: 28%]
+  GEO SCORE:      72 / 100   [+5 vs last week]
+  CITATION RATE: 55.5%     [Industry avg: 45%]
   SENTIMENT:     Pos 61% | Neu 29% | Neg 10%
 -------------------------------------------------------
   TOP AI SEARCH TERMS
-  1. "best project management tool"    (18 mentions)
-  2. "acme corp reviews"               (12 mentions)
-  3. "project software comparison"     ( 9 mentions)
+  1. "best crm software"                  (500 mentions)
+  2. "crm comparison"                     (300 mentions)
+  3. "crm pricing"                        (200 mentions)
 -------------------------------------------------------
-  GEO INSIGHTS  [3 of 5]
-  [WARN] Citation rate below 40% target.
-         Action: Publish 2+ authoritative
-         comparison articles this month.
-  [INFO] Sentiment trending positive.
-         Maintain current content cadence.
-  [CRIT] Brand missing from 3 high-vol
-         queries. Add FAQ schema markup.
+  GEO INSIGHTS  [1 action]
+  [INFO] Strong positive momentum detected.
+  Action: Maintain current content cadence.
+  Double down on formats producing citations.
+  Consider expanding to adjacent topics.
 -------------------------------------------------------
-  Full report: https://app.rankscale.ai/brands/<id>
+  Full report: https://app.rankscale.ai/brands/[your-brand]
 =======================================================
 ```
 
 ---
 
-## Error Handling
+### Engine Strength Profile
 
-| Scenario | Behavior |
-|---|---|
-| Invalid API key | Show auth error + link to settings |
-| Rate limited (429) | Exponential backoff, max 3 retries |
-| Brand not found | Trigger brand discovery or onboarding |
-| Network timeout | Retry once, then show partial data |
-| API 5xx | Show graceful error + cached data if available |
+```
+node rankscale-skill.js --engine-profile
+```
+
+Sample output (live API — ROA-40 test run, 2026-02-26):
+```
+-------------------------------------------------------
+                ENGINE STRENGTH PROFILE
+-------------------------------------------------------
+  Engine       Visibility            Score
+  Average      ──────────────────     69.3
+-------------------------------------------------------
+  mistral_larg ██████████████████████ 83.2 ✦
+  deepseek_cha █████████████████████  79.5 ✦
+  chatgpt_gui  ████████████████████   77.5 ✦
+  perplexity_s ████████████████████   73.9
+  google_ai_ov ███████████████████      73
+  google_ai_mo ███████████████████    70.8
+  google_gemin ██████████████████     66.2
+  openai_gpt-5 ████████████████       60.1 ▼
+  anthropic_cl ███████████████        57.7 ▼
+  perplexity_g █████████████          50.7 ▼
+-------------------------------------------------------
+  ✦ Top-3 engines  ▼ Bottom-3 engines
+```
+
+---
+
+### Content Gap Analysis
+
+```
+node rankscale-skill.js --gap-analysis
+```
+
+Sample output (from live test data):
+```
+-------------------------------------------------------
+                 CONTENT GAP ANALYSIS
+-------------------------------------------------------
+  ENGINE GAPS (vs avg 44.5):
+  ▼ grok           score:   15  gap:-29.5
+  ▼ gemini         score:   20  gap:-24.5
+
+  LOW-VISIBILITY TERMS (<50%) — 3 found:
+  email campaigns        ░                      5%
+  sales pipeline         ░░░░                  18%
+  marketing automation   ░░░░░░░░              42%
+
+  RECOMMENDATIONS:
+  1. Create content targeting top 3 gap terms:
+     • "email campaigns"
+     • "sales pipeline"
+     • "marketing automation"
+  2. Optimise for grok: score 15 vs avg 44.5
+-------------------------------------------------------
+```
+
+---
+
+### Reputation Score
+
+```
+node rankscale-skill.js --reputation
+```
+
+Sample output (live test data, brand with sentiment keywords):
+```
+-------------------------------------------------------
+              REPUTATION SCORE & SUMMARY
+-------------------------------------------------------
+  Score:  ██████████████████░░░░░░░░░░░░ 61/100
+  Status: Good   Trend: ↑ improving
+
+  Sentiment breakdown:
+    Positive: 56.2%  Negative: 15.7%  Neutral: 28.1%
+
+  Top positive signals:
+    easy to use, great support, powerful
+
+  Risk areas:
+    expensive, slow
+
+  Summary: Brand health is good (61/100) and improving.
+           Monitor: expensive, slow.
+-------------------------------------------------------
+```
+
+---
+
+### Citation Intelligence
+
+```
+node rankscale-skill.js --citations
+node rankscale-skill.js --citations full
+node rankscale-skill.js --citations gaps
+```
+
+Sample output:
+```
+🔗 Citation Intelligence
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Top Sources:
+  1. techcrunch.com      42 citations   🟢 High authority
+  2. forbes.com          38 citations   🟢 High authority
+  3. g2.com              21 citations   🟡 Mid authority
+
+Gap vs Competitors:
+  Competitor A leads +31 citations on Perplexity
+  Competitor B leads +18 citations on Gemini
+
+PR Targets:
+  → wired.com (competitor coverage, not yours)
+  → venturebeat.com (high Gemini indexing)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+---
+
+## All Commands
+
+```
+node rankscale-skill.js [flag]
+
+--help                  Show help
+--discover-brands       List your tracked brands
+--engine-profile        Engine strength analysis
+--gap-analysis          Content gap finder
+--reputation            Brand reputation score
+--engine-movers         Top gainers and losers by engine
+--sentiment-alerts      Sentiment trends + risk detection
+--citations             Citation intelligence overview
+--citations authority   Top citation sources ranked
+--citations gaps        Gaps vs competitors
+--citations engines     Per-engine citation breakdown
+--citations correlation Citation↔Visibility correlation
+--citations full        All citation sections + PR targets
+```
+
+For a full command reference, see → [`references/COMMANDS.md`](references/COMMANDS.md)
+For detailed feature guides, see → [`references/FEATURES.md`](references/FEATURES.md)
+For real usage scenarios, see → [`references/EXAMPLES.md`](references/EXAMPLES.md)
+For troubleshooting help, see → [`references/TROUBLESHOOTING.md`](references/TROUBLESHOOTING.md)
+
+---
+
+## What's Next?
+
+Enhancements planned for future versions:
+
+- **Competitor comparison view** — Side-by-side delta scores vs tracked competitors
+- **Detection rate metric** — "Content Gap Investigation" rule for low-detection brands  
+- **Engine-specific optimization rules** — Tailored advice when engine disparity > 30 pts
+- **Scheduled reports** — Auto-run weekly summary via OpenClaw cron
+- **Multi-brand switching** — Quick brand toggle without changing env vars
+- **Export to PDF/CSV** — Shareable reports for team or client delivery
+
+---
+
+## Support
+
+Questions? We are happy to support.
+
+📧 `support@rankscale.ai`
+🌐 [rankscale.ai](https://rankscale.ai)
+
+See also: [`references/onboarding.md`](references/onboarding.md) for setup and first-run guidance.
