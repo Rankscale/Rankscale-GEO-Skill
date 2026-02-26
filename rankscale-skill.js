@@ -798,6 +798,344 @@ function interpretGeoData(data) {
   return deduplicated.slice(0, 5);
 }
 
+// ─── GEO Constants ───────────────────────────────────────
+const {
+  ENGINE_WEIGHTS,
+  ENGINE_WEIGHT_DEFAULT,
+  GEO_PATTERNS,
+  REPUTATION_SCORE_WEIGHTS,
+} = require('./references/geo-constants.js');
+
+// ─── Feature A: Engine Strength Profile ──────────────────
+/**
+ * Produces an ASCII heatmap of visibility by engine.
+ * Highlights top-3 (✦) and bottom-3 (▼) engines.
+ *
+ * @param {object} reportData  - normalizeReport() output
+ * @returns {string}           - formatted ASCII block
+ */
+function analyzeEngineStrength(reportData) {
+  const engines = safeGet(reportData, 'engines', {});
+  const entries = Object.entries(engines)
+    .map(([name, score]) => ({ name, score: safeNum(score) }))
+    .filter((e) => e.score > 0 || Object.keys(engines).length > 0)
+    .sort((a, b) => b.score - a.score);
+
+  if (entries.length === 0) {
+    return line() + '\n ENGINE STRENGTH PROFILE\n' +
+      line() + '\n  No engine data available.\n' + line();
+  }
+
+  const scores = entries.map((e) => e.score);
+  const avg = scores.reduce((a, b) => a + b, 0) / (scores.length || 1);
+  const max = Math.max(...scores, 1);
+
+  const BAR_WIDTH = 22;
+  const topSet = new Set(entries.slice(0, 3).map((e) => e.name));
+  const botSet = new Set(entries.slice(-3).map((e) => e.name));
+
+  const rows = entries.map(({ name, score }) => {
+    const barLen = Math.round((score / max) * BAR_WIDTH);
+    const bar = '█'.repeat(barLen).padEnd(BAR_WIDTH);
+    const tag = topSet.has(name) ? ' ✦' : botSet.has(name) ? ' ▼' : '  ';
+    const label = name.padEnd(12).slice(0, 12);
+    const pct = String(safeFixed(score, 1)).padStart(5);
+    return `  ${label} ${bar}${pct}${tag}`;
+  });
+
+  const avgLine = `  ${'Average'.padEnd(12)} ${
+    '─'.repeat(Math.round((avg / max) * BAR_WIDTH)).padEnd(BAR_WIDTH)
+  }${String(safeFixed(avg, 1)).padStart(5)}`;
+
+  return [
+    line(),
+    center('ENGINE STRENGTH PROFILE'),
+    line(),
+    `  ${'Engine'.padEnd(12)} ${'Visibility'.padEnd(BAR_WIDTH)}Score`,
+    avgLine,
+    line('-'),
+    ...rows,
+    line(),
+    `  ✦ Top-3 engines  ▼ Bottom-3 engines`,
+  ].join('\n');
+}
+
+// ─── Feature B: Content Gap Analysis ─────────────────────
+/**
+ * Identifies content gaps across engines and search terms.
+ * Cross-references visibility with engine averages to surface
+ * terms/engines needing attention.
+ *
+ * @param {object} reportData      - normalizeReport() output
+ * @param {object} searchTermsData - normalizeSearchTerms() output
+ * @returns {string}               - formatted gap analysis block
+ */
+function analyzeContentGaps(reportData, searchTermsData) {
+  const engineBreakdown = safeArray(
+    safeGet(reportData, 'engineBreakdown')
+  );
+  const terms = safeArray(
+    safeGet(searchTermsData, 'terms') ||
+    safeGet(searchTermsData, 'searchTerms') ||
+    safeGet(searchTermsData, 'data')
+  );
+
+  const lines = [
+    line(),
+    center('CONTENT GAP ANALYSIS'),
+    line(),
+  ];
+
+  // ── Engine-level gaps ──────────────────────────────────
+  if (engineBreakdown.length > 0) {
+    const scores = engineBreakdown.map((e) =>
+      safeNum(e.score ?? e.visibility ?? e.visibilityScore)
+    );
+    const overallAvg = scores.reduce((a, b) => a + b, 0) /
+      (scores.length || 1);
+
+    const weakEngines = engineBreakdown
+      .map((e) => ({
+        engine: safeGet(e, 'engine', 'unknown'),
+        score: safeNum(e.score ?? e.visibility ?? e.visibilityScore),
+      }))
+      .filter(
+        (e) =>
+          overallAvg - e.score >
+          GEO_PATTERNS.CONTENT_GAP_ENGINE_DROP_PTS
+      )
+      .sort((a, b) => a.score - b.score);
+
+    lines.push('  ENGINE GAPS (vs avg ' +
+      safeFixed(overallAvg, 1) + '):');
+
+    if (weakEngines.length === 0) {
+      lines.push('  No significant engine gaps detected.');
+    } else {
+      weakEngines.slice(0, 5).forEach(({ engine, score }) => {
+        const drop = safeFixed(overallAvg - score, 1);
+        lines.push(
+          `  ▼ ${engine.padEnd(14)} score:${
+            String(safeFixed(score, 1)).padStart(5)
+          }  gap:-${drop}`
+        );
+      });
+    }
+    lines.push('');
+  }
+
+  // ── Term-level gaps ────────────────────────────────────
+  if (terms.length > 0) {
+    // Identify low-visibility terms (<50% visibility)
+    const lowVis = terms
+      .map((t) => ({
+        term: String(safeGet(t, 'term', safeGet(t, 'query', '?'))),
+        visibility: safeNum(
+          t.visibility ?? t.visibilityScore ?? t.score
+        ),
+      }))
+      .filter((t) => t.visibility < 50)
+      .sort((a, b) => a.visibility - b.visibility);
+
+    lines.push(
+      `  LOW-VISIBILITY TERMS (<50%) — ${lowVis.length} found:`
+    );
+
+    if (lowVis.length === 0) {
+      lines.push('  All terms above 50% visibility. ✓');
+    } else {
+      lowVis.slice(0, 8).forEach(({ term, visibility }) => {
+        const bar = '░'.repeat(Math.round(visibility / 5)).padEnd(20);
+        lines.push(
+          `  ${term.slice(0, 22).padEnd(22)} ${bar}${
+            String(safeFixed(visibility, 0)).padStart(4)}%`
+        );
+      });
+      if (lowVis.length > 8) {
+        lines.push(`  … and ${lowVis.length - 8} more gaps`);
+      }
+    }
+    lines.push('');
+
+    // Priority recommendations
+    lines.push('  RECOMMENDATIONS:');
+    if (lowVis.length > 0) {
+      lines.push(
+        `  1. Create content targeting top ${
+          Math.min(lowVis.length, 3)
+        } gap terms:`
+      );
+      lowVis.slice(0, 3).forEach(({ term }) => {
+        lines.push(`     • "${term}"`);
+      });
+    }
+    if (engineBreakdown.length > 0) {
+      const scores = engineBreakdown.map((e) =>
+        safeNum(e.score ?? e.visibility ?? e.visibilityScore)
+      );
+      const avg = scores.reduce((a, b) => a + b, 0) /
+        (scores.length || 1);
+      const weakest = engineBreakdown
+        .sort(
+          (a, b) =>
+            safeNum(a.score ?? a.visibility) -
+            safeNum(b.score ?? b.visibility)
+        )
+        .slice(0, 1);
+      if (weakest.length) {
+        const e = weakest[0];
+        const eName = safeGet(e, 'engine', 'unknown');
+        lines.push(
+          `  2. Optimise for ${eName}: score ` +
+          `${safeFixed(
+            safeNum(e.score ?? e.visibility ?? e.visibilityScore), 1
+          )} vs avg ${safeFixed(avg, 1)}`
+        );
+      }
+    }
+  } else if (engineBreakdown.length === 0) {
+    lines.push('  No data available for gap analysis.');
+  }
+
+  lines.push(line());
+  return lines.join('\n');
+}
+
+// ─── Feature C: Reputation Score & Summary ───────────────
+/**
+ * Computes a 0-100 brand reputation score from sentiment data.
+ * Algorithm: 60% base ratio + 20% engine score - 20% severity penalty.
+ *
+ * @param {object} sentimentData - normalizeSentiment() output
+ * @returns {string}             - formatted reputation block
+ */
+function computeReputationScore(sentimentData) {
+  const W = REPUTATION_SCORE_WEIGHTS;
+
+  // Flatten keyword lists — handles both [{keyword,count}] and [string]
+  const toKwList = (arr) =>
+    safeArray(arr).map((k) =>
+      typeof k === 'object' && k !== null
+        ? { keyword: String(k.keyword || k.text || k), count: safeNum(k.count || k.frequency, 1) }
+        : { keyword: String(k), count: 1 }
+    );
+
+  const posKws = toKwList(safeGet(sentimentData, 'positiveKeywords'));
+  const negKws = toKwList(safeGet(sentimentData, 'negativeKeywords'));
+  const neuKws = toKwList(safeGet(sentimentData, 'neutralKeywords'));
+
+  const posCount = posKws.reduce((s, k) => s + k.count, 0);
+  const negCount = negKws.reduce((s, k) => s + k.count, 0);
+  const neuCount = neuKws.reduce((s, k) => s + k.count, 0);
+  const total = posCount + negCount + neuCount || 1;
+
+  // Step A: Base ratio (-1 to +1)
+  const baseRatio = (posCount - 2 * negCount) / total;
+
+  // Step B: Severity penalty — high-frequency negatives penalise more
+  const severityPenalty = negKws.reduce(
+    (sum, k) => sum + (k.count / total) ** 2,
+    0
+  );
+
+  // Step C: Engine-weighted sentiment score
+  const engineBreakdown = safeArray(
+    safeGet(sentimentData, 'engineBreakdown')
+  );
+  const totalEngineWeight = Object.values(ENGINE_WEIGHTS).reduce(
+    (a, b) => a + b,
+    0
+  );
+  const engineScore =
+    engineBreakdown.length > 0
+      ? engineBreakdown.reduce((acc, e) => {
+          const wt =
+            ENGINE_WEIGHTS[String(e.engine).toLowerCase()] ||
+            ENGINE_WEIGHT_DEFAULT;
+          return acc + safeNum(e.sentiment) * wt;
+        }, 0) / totalEngineWeight
+      : 0;
+
+  // Combine
+  const raw =
+    baseRatio * W.BASE_RATIO +
+    engineScore * W.ENGINE_SCORE -
+    severityPenalty * W.SEVERITY_PENALTY;
+
+  const score = Math.round(
+    Math.max(0, Math.min(100, (raw + W.NORM_OFFSET) * W.NORM_SCALE))
+  );
+
+  // Trend: use report change or sentiment trend if available
+  const sentimentTrend = safeGet(sentimentData, 'trend', null);
+  let trend = 'stable';
+  if (sentimentTrend === 'up' || sentimentTrend === 'improving') {
+    trend = 'improving';
+  } else if (sentimentTrend === 'down' || sentimentTrend === 'declining') {
+    trend = 'declining';
+  }
+
+  // Risk areas: top negative keywords by count
+  const riskAreas = negKws
+    .sort((a, b) => b.count - a.count)
+    .slice(0, W.TOP_RISK_KEYWORDS)
+    .map((k) => k.keyword);
+
+  // Top positive keywords
+  const topPos = posKws
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5)
+    .map((k) => k.keyword);
+
+  // Score label
+  const scoreLabel =
+    score >= 75 ? 'Excellent' :
+    score >= 60 ? 'Good' :
+    score >= 45 ? 'Fair' :
+    score >= 30 ? 'Poor' : 'Critical';
+
+  // Trend arrow
+  const trendArrow =
+    trend === 'improving' ? '↑' :
+    trend === 'declining' ? '↓' : '→';
+
+  // Summary sentence
+  const summary =
+    `Brand health is ${scoreLabel.toLowerCase()} (${score}/100) ` +
+    `and ${trend}.` +
+    (riskAreas.length
+      ? ` Monitor: ${riskAreas.slice(0, 2).join(', ')}.`
+      : '');
+
+  // Score bar
+  const barLen = Math.round(score / 100 * 30);
+  const scoreBar = '█'.repeat(barLen) + '░'.repeat(30 - barLen);
+
+  return [
+    line(),
+    center('REPUTATION SCORE & SUMMARY'),
+    line(),
+    `  Score:  ${scoreBar} ${score}/100`,
+    `  Status: ${scoreLabel}   Trend: ${trendArrow} ${trend}`,
+    '',
+    `  Sentiment breakdown:`,
+    `    Positive: ${safeFixed(posCount / total * 100, 1)}%` +
+      `  Negative: ${safeFixed(negCount / total * 100, 1)}%` +
+      `  Neutral: ${safeFixed(neuCount / total * 100, 1)}%`,
+    '',
+    topPos.length
+      ? `  Top positive signals:\n    ${topPos.join(', ')}`
+      : '  No positive keywords found.',
+    '',
+    riskAreas.length
+      ? `  Risk areas:\n    ${riskAreas.join(', ')}`
+      : '  No significant risk areas.',
+    '',
+    `  Summary: ${summary}`,
+    line(),
+  ].join('\n');
+}
+
 // ─── ASCII Renderer ───────────────────────────────────────
 function pad(str, width) {
   const s = String(str);
@@ -1103,9 +1441,25 @@ async function run(args = {}) {
   // Interpret
   const insights = interpretGeoData(data);
 
-  // Render
-  const output = renderReport(data, insights, brandId, competitors);
-  console.log(output);
+  // ── GEO feature flags ─────────────────────────────────
+  const geoMode =
+    args.engineProfile || args.gapAnalysis || args.reputation;
+
+  if (geoMode) {
+    if (args.engineProfile) {
+      console.log(analyzeEngineStrength(data.report));
+    }
+    if (args.gapAnalysis) {
+      console.log(analyzeContentGaps(data.report, data.searchTerms));
+    }
+    if (args.reputation) {
+      console.log(computeReputationScore(data.sentiment));
+    }
+  } else {
+    // Default: full report
+    const output = renderReport(data, insights, brandId, competitors);
+    console.log(output);
+  }
 
   return { data, insights, competitors };
 }
@@ -1143,6 +1497,12 @@ if (require.main === module) {
       args.brandName = process.argv[++i];
     } else if (arg === '--discover-brands') {
       args.discoverBrands = true;
+    } else if (arg === '--engine-profile') {
+      args.engineProfile = true;
+    } else if (arg === '--gap-analysis') {
+      args.gapAnalysis = true;
+    } else if (arg === '--reputation') {
+      args.reputation = true;
     } else if (arg === '--help' || arg === '-h') {
       console.log([
         'Usage: node rankscale-skill.js [options]',
@@ -1152,6 +1512,9 @@ if (require.main === module) {
         '  --brand-id <id>      Brand ID',
         '  --brand-name <name>  Brand name (for discovery)',
         '  --discover-brands    List all brands on account',
+        '  --engine-profile     Engine strength heatmap',
+        '  --gap-analysis       Content gap analysis',
+        '  --reputation         Reputation score & summary',
         '  --help               Show this help',
         '',
         'Environment Variables:',
@@ -1200,6 +1563,10 @@ module.exports = {
   // Interpretation
   interpretGeoData,
   GEO_RULES,
+  // GEO Analysis Features (ROA-40)
+  analyzeEngineStrength,
+  analyzeContentGaps,
+  computeReputationScore,
   // Errors
   AuthError,
   NotFoundError,
