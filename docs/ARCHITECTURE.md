@@ -1,6 +1,6 @@
 # ARCHITECTURE — Rankscale GEO Analytics Skill
 
-**Skill ID:** `rs-geo-analytics` | **Version:** 1.0.0 | **Ticket:** RS-126
+**Skill ID:** `rs-geo-analytics` | **Version:** 1.0.1 | **Tickets:** RS-126, ROA-40
 
 This document is a technical reference for skill maintainers, contributors, and ClawhHub reviewers.
 
@@ -24,18 +24,25 @@ This document is a technical reference for skill maintainers, contributors, and 
 
 ```
 RS-Skill/
-├── rankscale-skill.js        # Main skill logic + GEO Interpretation Module
+├── rankscale-skill.js        # Main skill logic + GEO Interpretation Module + 7 feature modules
 ├── SKILL.md                  # OpenClaw skill spec (triggers, flow, output format)
 ├── .skill                    # ClawhHub metadata manifest (JSON)
 ├── README.md                 # GitHub landing page
 ├── USAGE.md                  # Comprehensive usage guide
 ├── CHANGELOG.md              # Version history
 ├── IMPLEMENTATION_SUMMARY.md # Builder notes and test results
+├── DOCUMENTATION_SUMMARY.md  # Documentation inventory and checklists
 ├── references/
-│   ├── api-integration.md    # Rankscale API endpoint reference
-│   └── geo-playbook.md       # GEO interpretation rules R1–R10
+│   ├── api-integration.md    # Rankscale API endpoint reference (6 endpoints)
+│   ├── geo-playbook.md       # GEO interpretation rules R1–R10
+│   ├── FEATURES.md           # Feature-by-feature guide with sample outputs
+│   ├── COMMANDS.md           # Quick-reference CLI flag table
+│   ├── EXAMPLES.md           # Real-world usage examples (live API tested)
+│   ├── TROUBLESHOOTING.md    # Common errors, causes, and fixes
+│   ├── presentation-style.md # Metric presentation style guide
+│   └── onboarding.md         # Expanded onboarding reference (markdown)
 ├── assets/
-│   └── onboarding.md         # New user onboarding walkthrough
+│   └── onboarding.md         # New user onboarding walkthrough (ASCII format)
 ├── scripts/
 │   └── validate-skill.js     # ClawhHub validation script (84 checks)
 └── docs/
@@ -74,10 +81,11 @@ User message or CLI invocation
         |
         v
 3. Data Fetching
-   - GET /v1/metrics/report         (sequential, first)
-   - GET /v1/metrics/citations      (parallel)
-   - GET /v1/metrics/sentiment      (parallel)
+   - GET /v1/metrics/report              (sequential, first)
+   - GET /v1/metrics/citations           (parallel)
+   - GET /v1/metrics/sentiment           (parallel)
    - GET /v1/metrics/search-terms-report (parallel)
+   - GET /v1/metrics/engine-data         (parallel, v1.0.1+)
         |
         v
 4. Normalization
@@ -94,7 +102,12 @@ User message or CLI invocation
    - Limit to top 5 by severity
         |
         v
-6. ASCII Render
+6. Feature Module Dispatch
+   - Route to one of 7 feature modules based on CLI flag
+   - Each module renders its own ASCII output block
+        |
+        v
+7. ASCII Render
    - renderReport({ brand, report, citations, sentiment, terms, insights })
    - 55-char width, sectioned output
         |
@@ -112,7 +125,7 @@ The skill makes up to 5 HTTP requests per invocation. All requests use:
 
 ```
 Authorization: Bearer <RANKSCALE_API_KEY>
-User-Agent: openclaw-rs-geo-analytics/1.0.0
+User-Agent: openclaw-rs-geo-analytics/1.0.1
 Content-Type: application/json
 ```
 
@@ -128,10 +141,11 @@ brandId = selectBrand(brands)
 
 report  = await fetchReport(brandId)  # sequential (needed for brandName)
 
-[citations, sentiment, terms] = await Promise.all([
+[citations, sentiment, terms, engineData] = await Promise.all([
   fetchCitations(brandId),
   fetchSentiment(brandId),
   fetchSearchTerms(brandId),
+  fetchEngineData(brandId),            # v1.0.1+
 ])
 
 data = {
@@ -382,7 +396,7 @@ The `.skill` manifest registers the skill with ClawhHub:
 ```json
 {
   "id": "rs-geo-analytics",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "entrypoint": "rankscale-skill.js",
   "runtime": "node",
   "nodeVersion": ">=16",
@@ -424,11 +438,18 @@ const {
   fetchCitations,
   fetchSentiment,
   fetchSearchTerms,
+  fetchEngineData,
   normalizeSentiment,
   normalizeCitations,
   normalizeReport,
   normalizeSearchTerms,
   interpretGeoData,
+  analyzeEngineStrength,
+  analyzeContentGaps,
+  analyzeReputation,
+  analyzeEngineMovers,
+  analyzeSentimentAlerts,
+  analyzeCitations,
   GEO_RULES,
   AuthError,
   NotFoundError,

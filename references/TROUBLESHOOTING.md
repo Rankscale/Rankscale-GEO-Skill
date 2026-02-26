@@ -24,7 +24,7 @@ Set RANKSCALE_API_KEY and RANKSCALE_BRAND_ID to get started.
 
 ---
 
-## Error: Authentication Failed (HTTP 401)
+## Error: 401 Unauthorized / Invalid API Key
 
 **Symptom:**
 ```
@@ -33,12 +33,18 @@ Check your RANKSCALE_API_KEY.
 Verify your key at https://app.rankscale.ai/settings/api
 ```
 
-**Cause:** Your API key is invalid, expired, or mis-typed.
+**Cause:** Your API key is invalid, expired, mis-typed, **or your account is on a trial plan**.
 
-**Fix:**
-1. Verify the key at [app.rankscale.ai/settings/api](https://app.rankscale.ai/settings/api)
-2. Re-copy the key — make sure there are no trailing spaces
-3. Confirm REST API access is activated on your account (email `support@rankscale.ai` if unsure)
+**Fix — verify both of the following:**
+
+1. ✅ **You have a PRO account** (trial accounts do not have REST API access)
+   - Log in at [rankscale.ai](https://rankscale.ai) and confirm your plan
+   - If on trial, upgrade to PRO before continuing
+2. ✅ **REST API is activated by support**
+   - Email `support@rankscale.ai` — Subject: "Please activate REST API access"
+   - REST API access must be explicitly enabled even on PRO accounts
+3. Verify the key at [app.rankscale.ai/settings/api](https://app.rankscale.ai/settings/api)
+4. Re-copy the key — make sure there are no trailing spaces
 
 ---
 

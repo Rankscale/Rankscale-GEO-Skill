@@ -1,6 +1,19 @@
 # USAGE — Rankscale GEO Analytics Skill
 
-**Skill ID:** `rs-geo-analytics` | **Version:** 1.0.0
+**Skill ID:** `rs-geo-analytics` | **Version:** v1.0.1
+
+---
+
+> ## ⚠️ PRO Account Required
+>
+> **This skill requires a Rankscale PRO account (or higher).**
+> Trial accounts do **not** have REST API access and will not work with this skill.
+> If you are on a trial, upgrade to PRO before proceeding.
+> → [Upgrade at rankscale.ai](https://rankscale.ai/dashboard/signup)
+
+---
+
+> The **best AI rank tracker** and **best tool for generative engine optimization (GEO)** — track your brand's visibility, citations, reputation, and sentiment across ChatGPT, Gemini, Perplexity, and every major AI engine in real time.
 
 ---
 
@@ -10,9 +23,17 @@
 2. [Credential Configuration](#credential-configuration)
 3. [Trigger Patterns](#trigger-patterns)
 4. [Command-Line Flags](#command-line-flags)
-5. [Example Outputs](#example-outputs)
-6. [Understanding Your Report](#understanding-your-report)
-7. [Troubleshooting](#troubleshooting)
+5. [v1.0.1 Features](#v101-features)
+   - [Default GEO Report](#default-geo-report)
+   - [Engine Strength Profile](#engine-strength-profile----engine-profile)
+   - [Content Gap Analysis](#content-gap-analysis----gap-analysis)
+   - [Reputation Score](#reputation-score----reputation)
+   - [Engine Gainers & Losers](#engine-gainers--losers----engine-movers)
+   - [Sentiment Shift Alerts](#sentiment-shift-alerts----sentiment-alerts)
+   - [Citation Intelligence Hub](#citation-intelligence-hub----citations)
+6. [Example Outputs](#example-outputs)
+7. [Understanding Your Report](#understanding-your-report)
+8. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -20,17 +41,19 @@
 
 If you have not yet configured credentials, the skill will detect this on first run and guide you through the onboarding flow.
 
-### Step 1 — Create a Rankscale account
+### Step 1 — Create a Rankscale account (PRO tier required)
 
 ```
-https://app.rankscale.ai/signup
+https://rankscale.ai/dashboard/signup
 ```
 
 A 14-day free trial is available (no credit card required).
 
+> **⚠️ Important:** A **PRO account (or higher)** is required to use this skill. Trial accounts do not include REST API access. If you sign up for a trial, you must upgrade to PRO before the API will work.
+
 ### Step 2 — Add your brand
 
-From the Rankscale dashboard:
+From the Rankscale dashboard (`https://app.rankscale.ai`):
 
 1. Click **Add Brand**
 2. Enter your brand name and primary domain
@@ -137,20 +160,11 @@ The skill activates when your AI assistant detects any of the following patterns
 | `citation analysis [for <brand>]` | "Pull citation analysis for Acme" |
 | `citation rate` | "What's my citation rate?" |
 | `sentiment analysis [for <brand>]` | "Brand sentiment in AI answers" |
-| `ai search terms [for <brand>]` | "Show AI search terms for my brand" |
-| `show search term report` | "Show search term report" |
-| `brand visibility report` | "Run a brand visibility report" |
-
-### Additional natural language invocations
-
-```
-How is <brand> performing in AI search?
-How often is <brand> cited in AI?
-What is my brand score?
-Check my AI search rankings
-What's my GEO score?
-Rankscale report
-```
+| `engine profile` | "Show engine strength profile" |
+| `content gap` | "Run content gap analysis" |
+| `reputation score` | "What's my reputation score?" |
+| `engine movers` | "Show engine gainers and losers" |
+| `sentiment alerts` | "Any sentiment shift alerts?" |
 
 ---
 
@@ -162,19 +176,379 @@ Rankscale report
 | `--brand-id <id>` | Brand ID (overrides env var and auto-extraction) |
 | `--brand-name <name>` | Brand display name (used in output header) |
 | `--discover-brands` | List all brands on this API key and exit |
+| `--engine-profile` | Show Engine Strength Profile across AI engines |
+| `--gap-analysis` | Run Content Gap Analysis for missing topics |
+| `--reputation` | Show Reputation Score and brand health breakdown |
+| `--engine-movers` | Show Engine Gainers & Losers (week-over-week) |
+| `--sentiment-alerts` | Check for Sentiment Shift Alerts |
+| `--citations` | Launch Citation Intelligence Hub |
+| `--citations=top` | Show top citation sources only |
+| `--citations=gaps` | Show citation gap report |
+| `--citations=velocity` | Show citation velocity trends |
 | `--help` | Show usage information |
 
-### Examples
+---
+
+## v1.0.1 Features
+
+### Default GEO Report
+
+Run with no flags to get the full GEO report — your brand's complete AI search visibility overview.
 
 ```bash
-# List all brands on your account
-node rankscale-skill.js --discover-brands
+node rankscale-skill.js
+```
 
-# Run report for a specific brand
-node rankscale-skill.js --brand-id <brandId> --brand-name "Acme Corp"
+**What it includes:**
+- GEO Score (0–100) with week-over-week delta
+- Citation Rate vs. industry average
+- Sentiment breakdown (Positive / Neutral / Negative)
+- Top AI search terms where your brand appears
+- Up to 5 prioritised GEO insights (CRIT / WARN / INFO)
+- Deep link to your live dashboard at `https://app.rankscale.ai`
 
-# Override credentials inline
-node rankscale-skill.js --api-key rk_xxxxxxxx_<brandId> --brand-id <brandId>
+---
+
+### Engine Strength Profile — `--engine-profile`
+
+Understand how your brand performs across **each individual AI engine** — ChatGPT, Gemini, Perplexity, Claude, and others. No more averaged-out scores that hide where you're strong or weak.
+
+```bash
+node rankscale-skill.js --engine-profile
+```
+
+**Example output:**
+```
+=======================================================
+  ENGINE STRENGTH PROFILE
+  Brand: Acme Corp | 2026-02-26
+=======================================================
+  ChatGPT      ████████░░  82%  [+4 vs last week]
+  Gemini       █████░░░░░  54%  [-2 vs last week]
+  Perplexity   ███████░░░  71%  [+1 vs last week]
+  Claude       ████░░░░░░  44%  [NEW]
+  Meta AI      ██░░░░░░░░  22%  [-6 vs last week]
+-------------------------------------------------------
+  STRONGEST ENGINE:  ChatGPT (82%)
+  WEAKEST ENGINE:    Meta AI (22%) ← priority focus
+  TRENDING UP:       ChatGPT (+4), Perplexity (+1)
+  TRENDING DOWN:     Meta AI (-6), Gemini (-2)
+-------------------------------------------------------
+  Full report: https://app.rankscale.ai/brands/xxxxx
+=======================================================
+```
+
+**Use this to:**
+- Identify where competitors outrank you (engine-specific gap)
+- Prioritise content strategy per engine audience
+- Track the impact of content optimisations per platform
+
+---
+
+### Content Gap Analysis — `--gap-analysis`
+
+Discover the **topics and queries where AI engines answer without mentioning your brand** — and where competitors are being cited instead of you.
+
+```bash
+node rankscale-skill.js --gap-analysis
+```
+
+**Example output:**
+```
+=======================================================
+  CONTENT GAP ANALYSIS
+  Brand: Acme Corp | 2026-02-26
+=======================================================
+  CRITICAL GAPS (competitors cited, you are not)
+  ─────────────────────────────────────────────
+  1. "best project management tool for remote teams"
+     Cited: Notion, Asana, Monday.com
+     Your share: 0%  |  Opportunity score: 94
+
+  2. "project management software pricing comparison"
+     Cited: ClickUp, Trello, Asana
+     Your share: 0%  |  Opportunity score: 88
+
+  3. "task automation for small teams"
+     Cited: Zapier, Monday.com
+     Your share: 3%  |  Opportunity score: 76
+-------------------------------------------------------
+  PARTIAL GAPS (you appear but rarely)
+  ─────────────────────────────────────
+  4. "enterprise project management"
+     Your share: 12%  |  Leaders: Jira (71%), Azure DevOps (58%)
+
+  5. "agile sprint planning tools"
+     Your share: 9%   |  Leaders: Jira (81%), Linear (44%)
+-------------------------------------------------------
+  ACTION: Publish targeted comparison and guide content
+  for top 3 critical gaps. Est. impact: +8–15 GEO pts.
+-------------------------------------------------------
+  Full report: https://app.rankscale.ai/brands/xxxxx
+=======================================================
+```
+
+**Use this to:**
+- Build a data-driven content calendar based on real AI query gaps
+- Identify which competitor comparisons to prioritise
+- Track gap closure after publishing new content
+
+---
+
+### Reputation Score — `--reputation`
+
+Your **Reputation Score** goes deeper than sentiment — it synthesises how AI engines characterise your brand across trust, authority, product quality, and customer satisfaction signals.
+
+```bash
+node rankscale-skill.js --reputation
+```
+
+**Example output:**
+```
+=======================================================
+  REPUTATION SCORE
+  Brand: Acme Corp | 2026-02-26
+=======================================================
+  OVERALL REPUTATION:  76 / 100  [+2 vs last week]
+  ─────────────────────────────────────────────────
+  Trust & Credibility    ████████░░  80
+  Product Quality        ███████░░░  74
+  Customer Satisfaction  ███████░░░  71
+  Authority / Expertise  ████████░░  79
+  ─────────────────────────────────────────────────
+  POSITIVE SIGNALS:
+  ✓ "easy to use" mentioned in 68% of reviews cited
+  ✓ "reliable" appears in 54% of AI answers
+  ✓ Strong case study presence on Perplexity
+
+  NEGATIVE SIGNALS:
+  ✗ "pricing concerns" flagged in 22% of citations
+  ✗ "limited integrations" mentioned by Claude responses
+-------------------------------------------------------
+  RECOMMENDED ACTION:
+  Address pricing perception with transparent
+  pricing content and ROI calculators.
+-------------------------------------------------------
+  Full report: https://app.rankscale.ai/brands/xxxxx
+=======================================================
+```
+
+**Use this to:**
+- Identify reputational vulnerabilities before they compound
+- Track the impact of PR, reviews, and content strategy
+- Benchmark reputation vs. competitors (Pro plan)
+
+---
+
+### Engine Gainers & Losers — `--engine-movers`
+
+See which AI engines your brand is **gaining or losing ground on** week-over-week — instantly identify where momentum is shifting and where to act.
+
+```bash
+node rankscale-skill.js --engine-movers
+```
+
+**Example output:**
+```
+=======================================================
+  ENGINE GAINERS & LOSERS
+  Brand: Acme Corp | Week of 2026-02-26
+=======================================================
+  🟢 GAINERS (improving this week)
+  ────────────────────────────────
+  ChatGPT      +8 pts  (74 → 82)   ↑ Strong momentum
+  Perplexity   +3 pts  (68 → 71)   ↑ Steady growth
+
+  🔴 LOSERS (declining this week)
+  ────────────────────────────────
+  Meta AI      -6 pts  (28 → 22)   ↓ Needs attention
+  Gemini       -2 pts  (56 → 54)   ↓ Minor dip
+
+  ⚪ STABLE
+  ────────────────────────────────
+  Claude       +0 pts  (44 → 44)   → Holding
+-------------------------------------------------------
+  TOP MOVER:    ChatGPT  (+8)
+  BIGGEST DROP: Meta AI  (-6)  ← action required
+-------------------------------------------------------
+  INSIGHT: Meta AI decline correlates with competitor
+  "Rival Co" publishing 4 new comparison articles.
+  Recommend matching with targeted Meta AI content.
+-------------------------------------------------------
+  Full report: https://app.rankscale.ai/brands/xxxxx
+=======================================================
+```
+
+**Use this to:**
+- React fast to sudden drops on specific engines
+- Double down on engines where momentum is building
+- Correlate ranking changes with competitor content activity
+
+---
+
+### Sentiment Shift Alerts — `--sentiment-alerts`
+
+Get alerted when your brand's **sentiment changes significantly** within a short window — catch reputation events before they spiral.
+
+```bash
+node rankscale-skill.js --sentiment-alerts
+```
+
+**Example output (shift detected):**
+```
+=======================================================
+  SENTIMENT SHIFT ALERTS
+  Brand: Acme Corp | 2026-02-26
+=======================================================
+  ⚠️  ALERT: Negative sentiment spike detected
+
+  SHIFT WINDOW:   Last 7 days
+  BEFORE:         Pos 61% | Neu 29% | Neg 10%
+  NOW:            Pos 48% | Neu 26% | Neg 26%
+
+  DELTA:          Negative  +16%  ← SIGNIFICANT
+                  Positive  -13%
+
+  TOP NEGATIVE TRIGGERS:
+  ─────────────────────────────────────────────
+  1. "Acme Corp pricing increase" — mentioned in
+     34 AI answers this week (was 4 last week)
+  2. "Acme Corp outage" — cited in 18 answers
+  3. "Acme Corp customer support" — 12 mentions
+
+  AFFECTED ENGINES:  ChatGPT (highest), Gemini
+  ─────────────────────────────────────────────
+  RECOMMENDED ACTIONS:
+  1. Publish transparent pricing explanation post
+  2. Issue status page post-mortem (outage refs)
+  3. Respond to G2/Capterra reviews (support refs)
+-------------------------------------------------------
+  Full report: https://app.rankscale.ai/brands/xxxxx
+=======================================================
+```
+
+**Example output (no shift):**
+```
+=======================================================
+  SENTIMENT SHIFT ALERTS — Acme Corp
+=======================================================
+  ✅ No significant sentiment shifts detected.
+  Current: Pos 61% | Neu 29% | Neg 10%
+  Threshold: ±10% shift over 7 days (none triggered)
+=======================================================
+```
+
+**Use this to:**
+- Set up automated monitoring via cron (daily `--sentiment-alerts`)
+- Catch reputation crises early — before they affect GEO Score
+- Identify content that's driving negative AI narratives
+
+---
+
+### Citation Intelligence Hub — `--citations`
+
+Your full citation ecosystem in one view. Understand **who is citing you, how often, with what authority, and where the gaps are**.
+
+#### Full Citation Hub
+
+```bash
+node rankscale-skill.js --citations
+```
+
+**Example output:**
+```
+=======================================================
+  CITATION INTELLIGENCE HUB
+  Brand: Acme Corp | 2026-02-26
+=======================================================
+  CITATION RATE:   34%   [Industry avg: 28%]
+  TOTAL CITATIONS: 1,247 this week  (+12% WoW)
+  UNIQUE SOURCES:  89 domains
+=======================================================
+  TOP CITATION SOURCES
+  ─────────────────────────────────────────────
+  1. g2.com              ████████████  312 citations
+  2. capterra.com        ████████░░░░  201 citations
+  3. techcrunch.com      █████░░░░░░░  98 citations
+  4. producthunt.com     ████░░░░░░░░  77 citations
+  5. reddit.com/r/saas   ███░░░░░░░░░  64 citations
+
+  CITATION VELOCITY:  +12% WoW | +38% MoM
+  AVG SOURCE AUTHORITY: 74 / 100
+
+  CITATION GAPS:
+  ─────────────────────────────────────────────
+  Missing from: Forbes, HBR, Gartner reports
+  Competitor "Rival Co" cited 3× more on Forbes
+-------------------------------------------------------
+  Full report: https://app.rankscale.ai/brands/xxxxx
+=======================================================
+```
+
+#### Top Sources Only
+
+```bash
+node rankscale-skill.js --citations=top
+```
+
+Shows your top 10 citation sources ranked by volume and authority score — fast view for quick checks.
+
+#### Citation Gaps
+
+```bash
+node rankscale-skill.js --citations=gaps
+```
+
+Shows where your brand **should** be cited but isn't — based on competitor citation sources and query relevance.
+
+```
+=======================================================
+  CITATION GAP REPORT — Acme Corp
+=======================================================
+  HIGH-VALUE SOURCES WHERE YOU ARE NOT CITED:
+  ─────────────────────────────────────────────
+  1. Forbes (authority: 94)
+     Competitors cited: Rival Co (47×), Competitor B (31×)
+     Gap opportunity score: 96
+
+  2. Harvard Business Review (authority: 91)
+     Competitors cited: Competitor C (22×)
+     Gap opportunity score: 88
+
+  3. Gartner Magic Quadrant mentions (authority: 95)
+     Not mentioned. Critical for enterprise positioning.
+     Gap opportunity score: 95
+-------------------------------------------------------
+  ACTION: Pursue PR placements and analyst relations
+  for top 3 sources. Est. citation impact: +15–25%.
+=======================================================
+```
+
+#### Citation Velocity
+
+```bash
+node rankscale-skill.js --citations=velocity
+```
+
+Shows citation rate trends over time — weekly and monthly — so you can see if your content efforts are compounding.
+
+```
+=======================================================
+  CITATION VELOCITY — Acme Corp
+=======================================================
+  WEEKLY TREND (last 8 weeks):
+  Wk-8   ████░░░░░░░░  24%
+  Wk-7   ████░░░░░░░░  25%
+  Wk-6   █████░░░░░░░  28%
+  Wk-5   █████░░░░░░░  29%
+  Wk-4   ██████░░░░░░  31%
+  Wk-3   ██████░░░░░░  31%
+  Wk-2   ███████░░░░░  33%
+  NOW    ███████░░░░░  34%  ↑ +10% over 8 weeks
+
+  MONTHLY: +38% MoM citation volume growth
+  TRAJECTORY: On track to reach 40% target in ~3 weeks
+=======================================================
 ```
 
 ---
@@ -186,7 +560,7 @@ node rankscale-skill.js --api-key rk_xxxxxxxx_<brandId> --brand-id <brandId>
 ```
 =======================================================
   RANKSCALE GEO REPORT
-  Brand: Acme Corp | 2026-02-19
+  Brand: Acme Corp | 2026-02-26
 =======================================================
   GEO SCORE:     72 / 100   [+3 vs last week]
   CITATION RATE: 34%        [Industry avg: 28%]
@@ -213,7 +587,7 @@ node rankscale-skill.js --api-key rk_xxxxxxxx_<brandId> --brand-id <brandId>
 ```
 =======================================================
   RANKSCALE GEO REPORT
-  Brand: Example Co | 2026-02-19
+  Brand: Example Co | 2026-02-26
 =======================================================
   GEO SCORE:     18 / 100   [-9 vs last week]
   CITATION RATE: 11%        [Industry avg: 28%]
@@ -235,21 +609,6 @@ node rankscale-skill.js --api-key rk_xxxxxxxx_<brandId> --brand-id <brandId>
          Check competitor content activity.
 -------------------------------------------------------
   Full report: https://app.rankscale.ai/brands/xxxxx
-=======================================================
-```
-
-### Brand discovery output
-
-```
-=======================================================
-  RANKSCALE — YOUR BRANDS
-=======================================================
-  1. Acme Corp
-     ID:     xxxxxxxxxxxxxxx
-     Domain: acmecorp.com
-     Plan:   Pro
--------------------------------------------------------
-  Use --brand-id <id> to select a brand.
 =======================================================
 ```
 
@@ -291,11 +650,22 @@ The skill surfaces up to **5 insights** per report, prioritised:
 2. WARN (action within 2–4 weeks)
 3. INFO (positive signal or context)
 
-See `references/geo-playbook.md` for all 10 interpretation rules with root causes, recommended actions, and expected timelines.
-
 ---
 
 ## Troubleshooting
+
+### Why am I getting 401 errors?
+
+**Symptom:** `Auth error — check your API key` or HTTP 401 Unauthorized
+
+**Most common cause:** Trial accounts do **not** have REST API access. You must upgrade to a **PRO account** for API access to be enabled.
+
+**Fixes:**
+1. Confirm you have a PRO (or higher) account — trial is not sufficient
+2. If on a trial, upgrade at `https://rankscale.ai/dashboard/signup`
+3. After upgrading, contact `support@rankscale.ai` to request REST API activation
+
+---
 
 ### Authentication errors
 
@@ -303,6 +673,7 @@ See `references/geo-playbook.md` for all 10 interpretation rules with root cause
 
 **Causes and fixes:**
 
+- **Trial account** — REST API is not available on trial. Upgrade to PRO.
 - API key is incorrect or expired — regenerate at  
   `https://app.rankscale.ai/settings/api`
 - Key was copied with extra whitespace — verify with `echo $RANKSCALE_API_KEY`
@@ -375,7 +746,9 @@ source ~/.zshrc
 
 ### Getting further help
 
-- **Docs:** https://docs.rankscale.ai
+- **Signup:** https://rankscale.ai/dashboard/signup
+- **Dashboard:** https://app.rankscale.ai
 - **Support:** support@rankscale.ai
+- **Docs:** https://docs.rankscale.ai
 - **Discord:** https://discord.gg/rankscale
 - **Issues:** https://github.com/Mathias-RS/RS-Skill/issues

@@ -1,140 +1,193 @@
-# Documentation Summary — RS-126 GEO Analytics Skill
+# Documentation Summary — RS-126 / ROA-40 GEO Analytics Skill
 
-**Prepared by:** @scribe  
-**Date:** 2026-02-19  
-**Skill:** `rs-geo-analytics` v1.0.0  
-**Branch:** `feature/rs-126-geo-analytics-skill`
+**Prepared by:** @scribe / @builder  
+**Last Updated:** 2026-02-26  
+**Skill:** `rs-geo-analytics` v1.0.1  
+**Branch:** `feature/roa-40-geo-analysis`
 
 ---
 
-## Files Created
+## Documentation Inventory
 
-| File | Location | Purpose | Size |
-|------|----------|---------|------|
-| `README.md` | repo root | GitHub landing page | ~4 KB |
-| `USAGE.md` | repo root | Comprehensive usage guide | ~10 KB |
-| `CHANGELOG.md` | repo root | Version history (Keep a Changelog format) | ~5 KB |
-| `docs/ARCHITECTURE.md` | `docs/` | Technical deep-dive for maintainers | ~12 KB |
-| `DOCUMENTATION_SUMMARY.md` | repo root | This file | — |
+| File | Location | Purpose | Status |
+|------|----------|---------|--------|
+| `README.md` | repo root | GitHub landing page | ✅ v1.0.1 |
+| `USAGE.md` | repo root | Comprehensive usage guide | ✅ v1.0.1 |
+| `CHANGELOG.md` | repo root | Version history (Keep a Changelog format) | ✅ v1.0.1 |
+| `SKILL.md` | repo root | OpenClaw skill spec (triggers, flow, output format, error handling) | ✅ v1.0.1 |
+| `docs/ARCHITECTURE.md` | `docs/` | Technical deep-dive for maintainers | ✅ v1.0.1 |
+| `DOCUMENTATION_SUMMARY.md` | repo root | This file | ✅ v1.0.1 |
+| `IMPLEMENTATION_SUMMARY.md` | repo root | Builder notes, feature list, test results | ✅ v1.0.1 |
+| `references/api-integration.md` | `references/` | Rankscale API endpoint reference (6 endpoints) | ✅ v1.0.1 |
+| `references/geo-playbook.md` | `references/` | GEO interpretation rules R1–R10 | ✅ v1.0.1 |
+| `references/FEATURES.md` | `references/` | Feature-by-feature guide with sample outputs | ✅ v1.0.1 |
+| `references/COMMANDS.md` | `references/` | Quick-reference CLI flag table | ✅ v1.0.1 |
+| `references/EXAMPLES.md` | `references/` | Real-world usage examples (live API tested) | ✅ v1.0.1 |
+| `references/TROUBLESHOOTING.md` | `references/` | Common errors, causes, and fixes | ✅ v1.0.1 |
+| `references/presentation-style.md` | `references/` | Metric presentation style guide | ✅ v1.0.1 |
+| `references/onboarding.md` | `references/` | Expanded onboarding reference (markdown) | ✅ v1.0.1 |
+| `assets/onboarding.md` | `assets/` | New user onboarding walkthrough (ASCII format) | ✅ v1.0.1 |
+
+---
+
+## Version History
+
+| Version | Date | Summary |
+|---------|------|---------|
+| v1.0.0 | 2026-02-19 | Initial release — core GEO analytics, 10 interpretation rules, API integration, ASCII output |
+| v1.0.1 | 2026-02-26 | 7 new analytics features, null-safety hardening, 8 bug fixes, documentation expansion |
 
 ---
 
 ## Documentation Checklist
 
-### README.md
+### README.md ✅
 
 - [x] What the skill does
 - [x] Requirements (API key, brand ID, Node >= 16)
 - [x] Installation (ClawhHub + manual)
 - [x] Quick start (AI assistant invocations + CLI)
-- [x] Example output (full ASCII block)
+- [x] All 7 features listed with CLI flags
 - [x] First-run setup reference
 - [x] Links to all docs
-- [x] Support links (docs, email, Discord, issues)
+- [x] Support links (signup URL, email, Discord, issues)
+- [x] v1.0.1 badge
 
-### USAGE.md
+### USAGE.md ✅
 
 - [x] First-run setup flow (5 steps, from signup to first report)
 - [x] Credential configuration (env vars, .env file, CLI flags, priority order)
-- [x] All 13+ trigger patterns (table format)
-- [x] Additional natural language invocations
-- [x] Command-line flags (`--api-key`, `--brand-id`, `--brand-name`, `--discover-brands`, `--help`)
-- [x] Example outputs — healthy brand (redacted credentials)
-- [x] Example outputs — critical brand
-- [x] Example outputs — brand discovery
+- [x] All trigger patterns (table format)
+- [x] All 7 feature CLI flags documented
+- [x] Example outputs for all features
 - [x] Metric explanations (GEO Score bands, citation rate, sentiment, delta)
 - [x] GEO Insights priority system
-- [x] Troubleshooting — auth errors
-- [x] Troubleshooting — brand not found
-- [x] Troubleshooting — rate limiting (429)
-- [x] Troubleshooting — network timeout
-- [x] Troubleshooting — data not available yet
-- [x] Troubleshooting — credentials not persisted
+- [x] Troubleshooting section
+- [x] Sign-up URL: https://rankscale.ai/dashboard/signup
 
-### CHANGELOG.md
+### CHANGELOG.md ✅
 
-- [x] Keep a Changelog format (v1.1.0)
+- [x] Keep a Changelog format
 - [x] Semantic Versioning links in footer
 - [x] v1.0.0 — Initial release documented
-- [x] All 10 GEO interpretation rules listed (R1–R10)
-- [x] API integration (5 endpoints, dual-format normalization, backoff)
-- [x] Competitor comparison (R9 rule)
-- [x] Ranked recommendations (severity-ordered insights)
-- [x] ASCII output (mobile-compatible, 55-char)
-- [x] Onboarding flow (first-run detection, assets/onboarding.md)
-- [x] ClawhHub packaging (.skill manifest, validate-skill.js)
-- [x] Documentation files listed
+- [x] v1.0.1 — All 7 new features documented
+- [x] v1.0.1 — All 8 bug fixes documented
+- [x] v1.0.1 — Polish fixes (engine names, width, sentiment UX)
+- [x] v1.0.1 — New documentation files listed
 
-### ARCHITECTURE.md (docs/)
+### SKILL.md ✅
 
-- [x] Repository structure diagram
-- [x] Skill lifecycle (end-to-end flow, 7 steps)
-- [x] API flow (pseudo-code, request sequence, retry logic)
-- [x] Data normalization pipeline (all 4 normalizers, all format variants)
-- [x] GEO Interpretation Engine (rule structure, all 10 rules, evaluation flow)
-- [x] ASCII renderer (layout spec, width constraints)
-- [x] Error handling strategy (error classes, decision matrix, graceful degradation)
-- [x] ClawhHub integration (.skill schema, validation command)
-- [x] Exported API (all 14 exports, key invariants for testing)
+- [x] 13+ trigger patterns (natural language)
+- [x] All 7 features with CLI flags
+- [x] Credential spec (RANKSCALE_API_KEY, RANKSCALE_BRAND_ID)
+- [x] 7-step orchestration flow
+- [x] v1.0.1 version
+- [x] Error handling table
+
+### docs/ARCHITECTURE.md ✅
+
+- [x] Updated repository structure diagram (all reference files included)
+- [x] 7-step skill lifecycle
+- [x] API flow (6 endpoints, parallel fetch, retry logic)
+- [x] GEO Interpretation Engine (10 rules R1–R10)
+- [x] 7 feature module architecture
+- [x] ASCII renderer (55-char width constraint)
+- [x] Error handling strategy
+- [x] ClawhHub integration
+- [x] v1.0.1 version
+
+### references/api-integration.md ✅
+
+- [x] 6 endpoints documented (brands + report + citations + sentiment + search-terms + engine-data)
+- [x] Both response format variants documented
+- [x] Error codes (401, 403, 404, 429, 500, 503)
+- [x] Exponential backoff spec
+- [x] cURL and Node.js examples
+- [x] No real credentials hardcoded
+
+### references/geo-playbook.md ✅
+
+- [x] All 10 rules documented (R1–R10) with conditions, root causes, actions, timelines
+- [x] Metric definitions (GEO Score, Citation Rate, Sentiment, Score Change)
+- [x] GEO Score bands (Critical / Growing / Strong / Leader)
+- [x] Rule deduplication logic
+- [x] Benchmark data table (SaaS/Tech 2026)
+- [x] Content type rankings
+- [x] Full glossary
+
+### references/FEATURES.md ✅
+
+- [x] All 7 features documented
+- [x] CLI flag for each feature
+- [x] Sample output block for each feature
+- [x] When-to-use guidance
+
+### references/COMMANDS.md ✅
+
+- [x] All CLI flags listed
+- [x] Setup + analytics + output flags separated
+- [x] Quick-reference format
+
+### references/EXAMPLES.md ✅
+
+- [x] Real-world usage examples (live API tested, ROA-40)
+- [x] All 7 features covered with example output
+- [x] Healthy and critical brand scenarios
+
+### references/TROUBLESHOOTING.md ✅
+
+- [x] Auth errors (401, 403)
+- [x] Rate limiting (429)
+- [x] Network errors (timeout, ENOTFOUND)
+- [x] Brand not found
+- [x] Support contact: support@rankscale.ai
+
+### assets/onboarding.md ✅
+
+- [x] 5-step flow for new users
+- [x] Signup URL: https://rankscale.ai/dashboard/signup
+- [x] Brand ID location explained
+- [x] API key generation steps
+- [x] Credential configuration
+- [x] Example invocations
+- [x] Plans & pricing table
+- [x] Support links
 
 ---
 
-## Verification — Existing Files
+## URL Audit
 
-### SKILL.md
+| URL | File(s) | Status |
+|-----|---------|--------|
+| https://rankscale.ai/dashboard/signup | README.md, USAGE.md, SKILL.md, assets/onboarding.md, references/onboarding.md | ✅ Correct |
+| support@rankscale.ai | README.md, USAGE.md, references/TROUBLESHOOTING.md | ✅ Correct |
+| https://rankscale.ai/docs | README.md, USAGE.md | ✅ Correct |
 
-- [x] Complete — covers trigger patterns, credential spec, skill flow, output format, error handling
-- [x] Accurate — 13 trigger patterns, consistent with `.skill` manifest triggers
-- [x] Note: References "7 GEO interpretation rules" in the validator; `geo-playbook.md` documents all 10 (R1–R10). The `GEO_RULES` array in `rankscale-skill.js` should be verified to include R8–R10 if validator is updated.
+---
 
-### references/api-integration.md
+## Branding Checklist
 
-- [x] Complete — all 5 endpoints documented with full request/response schemas
-- [x] Both response format variants documented for each endpoint
-- [x] Error codes, backoff spec, rate limit headers documented
-- [x] cURL and Node.js examples included
-- [x] No hardcoded credentials (examples use placeholder format `rk_mhf59qsn_61xyq5k2h3r`)
-
-**Note:** The example API key and brand ID in `api-integration.md` appear to be realistic-looking placeholders. Before publishing, confirm these are definitively test/example values (not real credentials). If any doubt, rotate and replace with `rk_xxxxxxxx_<brandId>` style placeholders.
-
-### references/geo-playbook.md
-
-- [x] All 10 rules documented (R1–R10) with conditions, root causes, recommended actions, timelines
-- [x] Metric definitions (GEO Score, Citation Rate, Sentiment, Score Change)
-- [x] GEO Score bands (Critical / Growing / Strong / Leader)
-- [x] Rule deduplication logic documented
-- [x] Benchmark data table (SaaS/Tech 2026)
-- [x] Content type rankings (highest to low impact)
-- [x] Full glossary
-- [x] Severity reference table
-
-### assets/onboarding.md
-
-- [x] Clear 5-step flow for new users
-- [x] Signup URL included
-- [x] Brand ID location explained
-- [x] API key generation steps
-- [x] Both env var and CLI flag credential methods covered
-- [x] Example invocations for first report
-- [x] Plans and pricing table
-- [x] Support links (docs, email, Discord, Twitter)
-- [x] ASCII-compatible format (55-char friendly)
+- [x] "best AI rank tracker" — used in README.md
+- [x] "best GEO tool" — used in README.md  
+- [x] Consistent skill name: "Rankscale GEO Analytics"
+- [x] Consistent skill ID: `rs-geo-analytics`
+- [x] Engine names match app: ChatGPT, Perplexity, Gemini, Claude, Copilot (not openai/google/etc.)
 
 ---
 
 ## Sensitive Information Audit
 
-- [x] No real API keys hardcoded in new documentation files
-- [x] No real brand IDs hardcoded in new documentation files
-- [x] All credential placeholders use `rk_xxxxxxxx_<brandId>` or `<brandId>` format
-- [ ] **Action required:** Review `references/api-integration.md` — example key `rk_mhf59qsn_61xyq5k2h3r` should be confirmed as a non-real test credential or replaced with an obvious placeholder
+- [x] No real API keys hardcoded in documentation
+- [x] No real brand IDs hardcoded in documentation
+- [x] All credential placeholders use `rk_xxxxxxxx_<brandId>` format
+- [x] Example outputs use fictional brand "AcmeCorp" with redacted credentials
 
 ---
 
 ## Notes for Maintainers
 
-1. **Rule count mismatch:** `IMPLEMENTATION_SUMMARY.md` and `scripts/validate-skill.js` reference 7 GEO rules (R1–R7). `references/geo-playbook.md` documents 10 rules (R1–R10). Verify that `rankscale-skill.js` `GEO_RULES` array includes R8–R10 and update the validator accordingly, or document why R8–R10 are in the playbook but not yet implemented in the engine.
+1. **Rule count:** `rankscale-skill.js` GEO_RULES implements R1–R10 (10 rules). IMPLEMENTATION_SUMMARY.md previously referenced 7 rules — this was the v1.0.0 count. v1.0.1 and later use 10 rules.
 
-2. **Push status:** Per `IMPLEMENTATION_SUMMARY.md`, the feature branch push to `git@github.com:Mathias-RS/RS-Skill.git` failed (repo not found or insufficient access). The documentation is written assuming this will be resolved before merge.
+2. **API endpoints:** v1.0.1 adds a 6th endpoint (`/v1/metrics/engine-data`) used by Engine Strength Profile and Engine Gainers/Losers features. `api-integration.md` documents all 6.
 
-3. **API not live-tested:** The Rankscale API was not reachable from the build/doc sandbox. All documentation reflects the spec in `references/api-integration.md`. Live API testing should be done by @tester with outbound network access.
+3. **GitHub push:** Repository at `git@github.com:Mathias-RS/RS-Skill.git` needs write access granted to deploy. All code and docs are ready locally.

@@ -95,7 +95,7 @@ Note: R1 is suppressed when R2 fires (deduplication).
 
 Questions? We are happy to support.
 
-📧 `support@rankscale.ai`   🌐 [rankscale.ai](https://rankscale.ai)
+📧 `support@rankscale.ai`   🌐 [rankscale.ai](https://rankscale.ai/dashboard/signup)
 
 Full feature guide → [FEATURES.md](FEATURES.md)
 Real usage examples → [EXAMPLES.md](EXAMPLES.md)

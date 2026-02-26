@@ -9,15 +9,18 @@
 // Engine visibility weights (sum ≈ 1.0)
 // Source: Engine Intelligence Matrix from research doc
 const ENGINE_WEIGHTS = {
-  chatgpt:     0.30,
-  perplexity:  0.20,
-  gemini:      0.18,
-  claude:      0.12,
-  deepseek:    0.05,
-  ai_overview: 0.05,
-  grok:        0.04,
-  mistral:     0.03,
-  ai_mode:     0.03,
+  chatgpt:      0.27,  // Largest user base, most impactful
+  perplexity:   0.18,  // Citation-heavy, great for authority
+  gemini:       0.17,  // Google ecosystem
+  claude:       0.12,  // Tech-savvy, quality responses
+  deepseek:     0.05,  // Strong in Asia/technical audiences
+  ai_overview:  0.05,  // Embedded in Google Search, high-intent
+  grok:         0.04,  // X/Twitter integration
+  mistral:      0.03,  // EU-focused, niche
+  ai_mode:      0.03,  // Newer Google integration
+  bing_copilot: 0.02,  // Microsoft/Bing AI — significant enterprise reach
+  meta_ai:      0.02,  // Meta ecosystem (Facebook, Instagram, WhatsApp)
+  you_com:      0.02,  // Privacy-focused, research audience
 };
 
 // Default weight for unknown engines
@@ -74,9 +77,63 @@ const REPUTATION_SCORE_WEIGHTS = {
   NORM_SCALE: 50,
 };
 
+// Human-readable display names for engine IDs
+// Source: engine-reference.md (all 20+ engine IDs from RankScale API)
+const ENGINE_DISPLAY_NAMES = {
+  // GUI Engines
+  'chatgpt_gui':                      'ChatGPT',
+  'perplexity_gui':                   'Perplexity',
+  'google_ai_overview':               'Google AI Overview',
+  'google_ai_mode_gui':               'Google AI Mode',
+  'xai_grok_gui':                     'Grok',
+  'bing_copilot_gui':                 'Bing Copilot',
+
+  // Perplexity API Engines
+  'perplexity_sonar':                 'Perplexity Sonar',
+  'perplexity_sonar_pro':             'Perplexity Sonar Pro',
+  'perplexity_sonar_reasoning':       'Perplexity Sonar R',
+  'perplexity_sonar_reasoning_pro':   'Perplexity Sonar R Pro',
+
+  // OpenAI
+  'openai_gpt-4o':                    'GPT-4o',
+  'openai_gpt-5':                     'GPT-5',
+
+  // Google Gemini
+  'google_gemini_15':                 'Gemini 1.5',
+  'google_gemini_20':                 'Gemini 2.0',
+  'google_gemini_25':                 'Gemini 2.5',
+
+  // Anthropic Claude
+  'anthropic_claude_3_5_sonnet':      'Claude 3.5 Sonnet',
+  'anthropic_claude_3_5_haiku':       'Claude 3.5 Haiku',
+  'anthropic_claude_4_5_haiku':       'Claude Haiku',
+
+  // DeepSeek
+  'deepseek_chat':                    'DeepSeek V3',
+
+  // Mistral
+  'mistral_large':                    'Mistral Large',
+};
+
+/**
+ * Get a human-readable display name for an engine ID.
+ * Falls back to cleaning underscores/hyphens if no mapping found.
+ * @param {string} engineId
+ * @returns {string}
+ */
+function getEngineDisplayName(engineId) {
+  if (!engineId) return 'Unknown';
+  const id = String(engineId);
+  return ENGINE_DISPLAY_NAMES[id]
+    || ENGINE_DISPLAY_NAMES[id.toLowerCase()]
+    || id.replace(/_/g, ' ').replace(/-/g, '-').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 module.exports = {
   ENGINE_WEIGHTS,
   ENGINE_WEIGHT_DEFAULT,
   GEO_PATTERNS,
   REPUTATION_SCORE_WEIGHTS,
+  ENGINE_DISPLAY_NAMES,
+  getEngineDisplayName,
 };

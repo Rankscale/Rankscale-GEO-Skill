@@ -1,156 +1,193 @@
-# Rankscale GEO Analytics Skill
+# 🚀 Rankscale GEO Analytics for OpenClaw
 
-**Skill ID:** `rs-geo-analytics`  
-**Version:** 1.0.0  
-**Ticket:** RS-126  
-**Branch:** `feature/rs-126-geo-analytics-skill`
+![Version](https://img.shields.io/badge/version-v1.0.1-blue) ![Status](https://img.shields.io/badge/status-Production%20Ready-brightgreen) ![Platform](https://img.shields.io/badge/platform-OpenClaw-purple)
 
-An [OpenClaw](https://openclaw.ai) skill that connects to the [Rankscale](https://rankscale.ai) API to fetch and interpret **GEO (Generative Engine Optimization)** analytics for your brand. Understand how often your brand is cited in AI-generated search answers, what the sentiment looks like, and what to do about it.
+## The Best AI Rank Tracker & Generative Engine Optimization Tool
 
----
+**Real-time visibility analytics across ChatGPT, Perplexity, Gemini, Claude, and more.**
 
-## What It Does
-
-- Fetches your brand's **GEO score**, citation rate, sentiment breakdown, and top AI search terms from the Rankscale API
-- Applies the **GEO Interpretation Engine** (10 rules, severity CRIT/WARN/INFO) to surface actionable insights
-- Compares your performance against **industry benchmarks** and tracked competitors
-- Renders results as **mobile-compatible ASCII output** (55-char width, no markdown tables)
-- Guides new users through **first-run onboarding** if credentials are missing
+Stop guessing where your brand shows up in AI answers. Rankscale GEO Analytics gives you deep, actionable visibility intelligence across every major AI engine — so you can optimize your content, protect your reputation, and dominate the AI-driven search landscape before your competitors even know it exists.
 
 ---
 
-## Requirements
+## ✨ Features at a Glance
 
-| Requirement | Details |
-|-------------|---------|
-| Node.js | >= 16 |
-| Rankscale account | Free trial available at https://app.rankscale.ai/signup |
-| `RANKSCALE_API_KEY` | API key from Settings > API Keys |
-| `RANKSCALE_BRAND_ID` | Your brand ID (auto-extracted from API key if omitted) |
+- 📊 **Engine Strength Profile** — Visibility heatmap across 12+ AI engines showing where you're strong and where you're invisible
+- 🎯 **Content Gap Analysis** — Identify topics with low AI coverage and get concrete recommendations to fill those gaps
+- 🛡️ **Reputation Score** — Brand health score (0–100) with full sentiment analysis across AI-generated responses
+- 📈 **Engine Gainers & Losers** — Track visibility changes per engine over time to spot trends early
+- ⚠️ **Sentiment Shift Alerts** — Detect emerging sentiment trends and surface risk keyword clusters before they escalate
+- 🔗 **Citation Intelligence Hub** — Authority ranking, citation gap analysis, and PR opportunities where your brand should be cited but isn't
+- 📋 **Default GEO Report** — Quick, comprehensive visibility overview to baseline your current standing
 
 ---
 
-## Installation
+## 💡 Why This Skill?
 
-### Via ClawhHub (recommended)
+### What is GEO?
 
-```
-/skill install rs-geo-analytics
-```
+**Generative Engine Optimization (GEO)** is the discipline of optimizing your brand, content, and digital presence so that AI-powered engines — like ChatGPT, Perplexity, Gemini, and Claude — surface you prominently and positively when users ask relevant questions. GEO is the next frontier beyond traditional SEO. As more users turn to AI for answers, your visibility in generated responses directly impacts brand discovery, trust, and revenue.
 
-ClawhHub handles credential prompts automatically on first run.
+### Why Rankscale GEO Analytics?
 
-### Manual
+- **Best-in-class GEO analytics** — Purpose-built for the AI era, not bolted onto legacy SEO tooling
+- **Full engine coverage** — Track across all major AI engines:
+  - ChatGPT (OpenAI)
+  - Perplexity AI
+  - Google Gemini
+  - Anthropic Claude
+  - Microsoft Copilot
+  - You.com
+  - Bing AI
+  - Meta AI
+  - And 4+ more emerging engines
+- **Actionable insights, not just data** — Every report tells you what to do next, not just what's happening
+- **Citation intelligence** — Discover the gold nuggets: where your brand *should* be cited but isn't, with direct PR opportunities
+- **Brand reputation tracking** — Know your sentiment score before a crisis hits, not after
+- **PR opportunity discovery** — Find gaps in your citation profile and turn them into press coverage
+
+---
+
+## 🏁 Getting Started
+
+### Step 1 — Create Your Rankscale Account (PRO account required)
+
+Head to [https://rankscale.ai/dashboard/signup](https://rankscale.ai/dashboard/signup) and create your account. Takes under 2 minutes.
+
+> **⚠️ PRO account required.** Trial accounts do **not** have REST API access and cannot be used with this skill. You must be on a PRO plan (or higher) for API access to function.
+
+### Step 2 — Activate REST API Access
+
+REST API access is required for this skill. Contact [support@rankscale.ai](mailto:support@rankscale.ai) to request API activation for your account. The team is fast and happy to help.
+
+### Step 3 — Configure & Launch
+
+Set your environment variables and run your first report:
 
 ```bash
-# Clone the repository
-git clone https://github.com/Mathias-RS/RS-Skill.git
-cd RS-Skill
+# Set your API key
+export RANKSCALE_API_KEY="your_api_key_here"
+export RANKSCALE_BRAND="your-brand-name"
 
-# Set credentials
-export RANKSCALE_API_KEY="rk_xxxxxxxx_<brandId>"
-export RANKSCALE_BRAND_ID="<brandId>"
+# Run your first GEO report
+openclaw rs-geo report
 
-# Run
-node rankscale-skill.js
+# Check engine strength profile
+openclaw rs-geo engines --brand "your-brand"
+
+# Get reputation score
+openclaw rs-geo reputation
 ```
+
+📖 Full setup walkthrough: [onboarding.md](./onboarding.md)
 
 ---
 
-## Quick Start
+## 🔍 Usage Examples
 
-### Via your AI assistant
-
-Once installed, just ask:
-
-```
-Run a Rankscale GEO report
-Show my AI search visibility
-What's my GEO score?
-Pull a citation analysis for Acme Corp
-How is my brand performing in AI search?
-```
-
-### Via command line
-
+### Run a Default GEO Report
 ```bash
-# Basic report (uses env vars for credentials)
-node rankscale-skill.js
-
-# With inline credentials
-node rankscale-skill.js --api-key rk_xxxxxxxx_<brandId> --brand-id <brandId>
-
-# Discover brands on your account
-node rankscale-skill.js --discover-brands
-
-# Help
-node rankscale-skill.js --help
+openclaw rs-geo report --brand "acme-corp"
+```
+**Output:**
+```
+📋 GEO Visibility Report — acme-corp
+Overall Visibility Score: 67/100
+Top Engines: ChatGPT (82%), Perplexity (74%), Gemini (61%)
+Weakest Engine: Copilot (23%) — action recommended
+Content Gaps: 14 identified topics
+Reputation Score: 78/100 (Positive)
 ```
 
-### Example output
-
+### Analyze Engine Strength Profile
+```bash
+openclaw rs-geo engines --brand "acme-corp" --heatmap
 ```
-=======================================================
-  RANKSCALE GEO REPORT
-  Brand: Acme Corp | 2026-02-19
-=======================================================
-  GEO SCORE:     72 / 100   [+3 vs last week]
-  CITATION RATE: 34%        [Industry avg: 28%]
-  SENTIMENT:     Pos 61% | Neu 29% | Neg 10%
--------------------------------------------------------
-  TOP AI SEARCH TERMS
-  1. "best project management tool"    (18 mentions)
-  2. "acme corp reviews"               (12 mentions)
-  3. "project software comparison"     ( 9 mentions)
--------------------------------------------------------
-  GEO INSIGHTS  [3 of 5]
-  [WARN] Citation rate below 40% target.
-         Action: Publish 2+ authoritative
-         comparison articles this month.
-  [INFO] Sentiment trending positive.
-         Maintain current content cadence.
-  [CRIT] Brand missing from 3 high-vol
-         queries. Add FAQ schema markup.
--------------------------------------------------------
-  Full report: https://app.rankscale.ai/brands/<id>
-=======================================================
+**Output:**
+```
+📊 Engine Strength Heatmap
+  ChatGPT     ████████░░  82%  ↑ +4pts
+  Perplexity  ███████░░░  74%  ↑ +2pts
+  Gemini      ██████░░░░  61%  → stable
+  Claude      █████░░░░░  53%  ↓ -3pts
+  Copilot     ██░░░░░░░░  23%  ↓ -8pts  ⚠️
+```
+
+### Discover Citation Gaps
+```bash
+openclaw rs-geo citations --brand "acme-corp" --gaps --opportunities
+```
+**Output:**
+```
+🔗 Citation Intelligence Hub
+Missing citations in 8 high-authority sources
+Top PR Opportunities:
+  → TechCrunch article on "Best CRM tools" (DA 94) — not cited
+  → Forbes "Top SaaS Platforms 2025" (DA 96) — not cited
+  → G2 comparison page (DA 91) — partially cited
+Recommended outreach: 3 contacts identified
+```
+
+### Run Sentiment Shift Alert Scan
+```bash
+openclaw rs-geo sentiment --alerts --risk-keywords
+```
+**Output:**
+```
+⚠️ Sentiment Shift Alerts
+Current Reputation Score: 78/100
+Trend: Slightly negative shift detected (last 7 days)
+Risk Keywords Emerging:
+  → "slow support" (3 mentions, Perplexity)
+  → "pricing concerns" (2 mentions, ChatGPT)
+Recommendation: Address support perception in content
 ```
 
 ---
 
-## First-Run Setup
+## 📚 Features Deep Dive
 
-If credentials are not set, the skill will walk you through setup interactively. See `assets/onboarding.md` for the full onboarding flow, or visit:
+Want to go deeper on any feature? We've got you covered:
 
-```
-https://app.rankscale.ai/signup
-```
-
----
-
-## Documentation
-
-| File | Description |
-|------|-------------|
-| `USAGE.md` | Full usage guide — triggers, flags, troubleshooting |
-| `CHANGELOG.md` | Version history |
-| `docs/ARCHITECTURE.md` | Technical deep-dive for skill maintainers |
-| `references/api-integration.md` | Rankscale API endpoint reference |
-| `references/geo-playbook.md` | GEO interpretation rules (R1–R10) |
-| `assets/onboarding.md` | New user onboarding walkthrough |
-| `SKILL.md` | OpenClaw skill spec (triggers, flow, output format) |
+- [FEATURES.md](./FEATURES.md) — Full feature guide with detailed explanations, configuration options, and pro tips for all 7 analytics modules
+- [COMMANDS.md](./COMMANDS.md) — Complete CLI command reference with all flags, options, and examples
 
 ---
 
-## Support
+## 📖 Documentation
 
-- **Rankscale Docs:** https://docs.rankscale.ai
-- **Rankscale Support:** support@rankscale.ai
-- **Rankscale Discord:** https://discord.gg/rankscale
-- **Issues:** https://github.com/Mathias-RS/RS-Skill/issues
+- [SKILL.md](./SKILL.md) — Main skill documentation and architecture overview
+- [FEATURES.md](./FEATURES.md) — Detailed feature guide for all 7 analytics modules
+- [COMMANDS.md](./COMMANDS.md) — Full CLI command reference
+- [onboarding.md](./onboarding.md) — Step-by-step signup and setup walkthrough
 
 ---
 
-## License
+## 🤝 Support & Feedback
 
-MIT — see `LICENSE` for details.
+We're here for you. Seriously.
+
+- **Email:** [support@rankscale.ai](mailto:support@rankscale.ai) — our team responds fast and loves helping users get the most out of GEO analytics
+- **Dashboard:** [https://rankscale.ai/dashboard](https://rankscale.ai/dashboard) — manage your account, API keys, and reports
+
+Got a feature request? Found a bug? Just want to share what you built? Reach out — we genuinely want to hear from you.
+
+---
+
+## 🌐 About Rankscale
+
+[Rankscale](https://rankscale.ai) is the leading platform for Generative Engine Optimization analytics. As AI-powered engines become the primary way people discover information, products, and brands, traditional SEO is no longer enough. Rankscale gives you the visibility data, reputation intelligence, and actionable insights you need to thrive in the AI-first world — tracking your brand presence across 12+ engines, surfacing citation gaps, monitoring sentiment shifts, and helping you build a stronger, more authoritative digital footprint where it counts most: inside the AI answers your customers are already reading.
+
+---
+
+## 📄 License & Contributing
+
+This OpenClaw skill is provided as part of the Rankscale ecosystem.
+
+- **License:** MIT — use it, fork it, build on it
+- **Contributing:** PRs and improvements welcome. Open an issue or email [support@rankscale.ai](mailto:support@rankscale.ai) to discuss
+- **Versioning:** Follows [Semantic Versioning](https://semver.org/) — current release is v1.0.1
+
+---
+
+*Built with ❤️ for the GEO-forward era. Track smarter. Rank better. Win the AI landscape.*

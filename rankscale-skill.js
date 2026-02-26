@@ -341,7 +341,7 @@ async function discoverBrandId(apiKey, brandName) {
   if (!Array.isArray(brands) || brands.length === 0) {
     throw new NotFoundError(
       'No brands found on this account. ' +
-        'Please set up a brand at https://app.rankscale.ai'
+        'Please set up a brand at https://rankscale.ai/dashboard/signup'
     );
   }
 
@@ -804,6 +804,7 @@ const {
   ENGINE_WEIGHT_DEFAULT,
   GEO_PATTERNS,
   REPUTATION_SCORE_WEIGHTS,
+  ENGINE_DISPLAY_NAMES,
 } = require('./references/geo-constants.js');
 
 // ─── Feature A: Engine Strength Profile ──────────────────
@@ -838,7 +839,8 @@ function analyzeEngineStrength(reportData) {
     const barLen = Math.round((score / max) * BAR_WIDTH);
     const bar = '█'.repeat(barLen).padEnd(BAR_WIDTH);
     const tag = topSet.has(name) ? ' ✦' : botSet.has(name) ? ' ▼' : '  ';
-    const label = name.padEnd(12).slice(0, 12);
+    const displayName = ENGINE_DISPLAY_NAMES[name] || ENGINE_DISPLAY_NAMES[name.toLowerCase()] || name;
+    const label = displayName.padEnd(20).slice(0, 20);
     const pct = String(safeFixed(score, 1)).padStart(5);
     return `  ${label} ${bar}${pct}${tag}`;
   });
@@ -874,11 +876,14 @@ function analyzeContentGaps(reportData, searchTermsData) {
   const engineBreakdown = safeArray(
     safeGet(reportData, 'engineBreakdown')
   );
-  const terms = safeArray(
-    safeGet(searchTermsData, 'terms') ||
-    safeGet(searchTermsData, 'searchTerms') ||
-    safeGet(searchTermsData, 'data')
-  );
+  // Accept flat Array (already-normalised) or raw object with nested terms
+  const terms = Array.isArray(searchTermsData)
+    ? searchTermsData
+    : safeArray(
+        safeGet(searchTermsData, 'terms') ||
+        safeGet(searchTermsData, 'searchTerms') ||
+        safeGet(searchTermsData, 'data')
+      );
 
   const lines = [
     line(),
@@ -1062,9 +1067,8 @@ function computeReputationScore(sentimentData) {
     engineScore * W.ENGINE_SCORE -
     severityPenalty * W.SEVERITY_PENALTY;
 
-  const score = Math.round(
-    Math.max(0, Math.min(100, (raw + W.NORM_OFFSET) * W.NORM_SCALE))
-  );
+  const scoreRaw = Math.max(0, Math.min(100, (raw + W.NORM_OFFSET) * W.NORM_SCALE));
+  const score = scoreRaw.toFixed(1); // string "50.0" format
 
   // Trend: use report change or sentiment trend if available
   const sentimentTrend = safeGet(sentimentData, 'trend', null);
@@ -1111,6 +1115,18 @@ function computeReputationScore(sentimentData) {
   const barLen = Math.round(score / 100 * 30);
   const scoreBar = '█'.repeat(barLen) + '░'.repeat(30 - barLen);
 
+  // Truncate keywords to fit width (≤55 chars per line)
+  const truncKw = (kw) => kw.length > 14 ? kw.slice(0, 12) + '…' : kw;
+  const topPosShort = topPos.slice(0, 2).map(truncKw);
+  const riskShort = riskAreas.slice(0, 2).map(truncKw);
+
+  // Summary lines truncated to ≤55 chars each
+  const summaryBase =
+    `  ${scoreLabel} (${score}/100) ${trendArrow} ${trend}`;
+  const summaryRisk = riskShort.length
+    ? `  Risks:    ${riskShort.join(', ')}`
+    : '';
+
   return [
     line(),
     center('REPUTATION SCORE & SUMMARY'),
@@ -1118,22 +1134,750 @@ function computeReputationScore(sentimentData) {
     `  Score:  ${scoreBar} ${score}/100`,
     `  Status: ${scoreLabel}   Trend: ${trendArrow} ${trend}`,
     '',
-    `  Sentiment breakdown:`,
-    `    Positive: ${safeFixed(posCount / total * 100, 1)}%` +
-      `  Negative: ${safeFixed(negCount / total * 100, 1)}%` +
-      `  Neutral: ${safeFixed(neuCount / total * 100, 1)}%`,
+    `  Sentiment:`,
+    ...(posKws.length === 0 && negKws.length === 0
+      ? ['    —', '    (Insufficient data)']
+      : [
+          `    Pos: ${safeFixed(posCount / total * 100, 1)}%` +
+          `  Neg: ${safeFixed(negCount / total * 100, 1)}%` +
+          `  Neu: ${safeFixed(neuCount / total * 100, 1)}%`,
+        ]),
     '',
-    topPos.length
-      ? `  Top positive signals:\n    ${topPos.join(', ')}`
-      : '  No positive keywords found.',
+    topPosShort.length
+      ? `  Strengths: ${topPosShort.join(', ')}`
+      : '  No positive signals found.',
     '',
-    riskAreas.length
-      ? `  Risk areas:\n    ${riskAreas.join(', ')}`
-      : '  No significant risk areas.',
-    '',
-    `  Summary: ${summary}`,
+    summaryBase,
+    ...(summaryRisk ? [summaryRisk] : []),
     line(),
   ].join('\n');
+}
+
+// ─── Feature D: Engine Gainers & Losers ──────────────────
+/**
+ * Compares current vs prior period visibility per engine,
+ * ranking by biggest gain or loss (±5+ point swing flagged).
+ *
+ * @param {object} reportData     - normalizeReport() current period
+ * @param {object} priorReportData - normalizeReport() prior period (may be null)
+ * @returns {string}              - formatted engine movers block
+ */
+function analyzeEngineMovers(reportData, priorReportData) {
+  const current = safeArray(safeGet(reportData, 'engineBreakdown'));
+  const prior = safeArray(safeGet(priorReportData, 'engineBreakdown'));
+
+  const lines = [
+    line(),
+    center('ENGINE GAINERS & LOSERS'),
+    line(),
+  ];
+
+  if (current.length === 0) {
+    lines.push('  No engine data available.');
+    lines.push(line());
+    return lines.join('\n');
+  }
+
+  // Build prior lookup by engine name
+  const priorMap = {};
+  prior.forEach((e) => {
+    const key = String(safeGet(e, 'engine', '')).toLowerCase();
+    if (key) priorMap[key] = safeNum(e.score ?? e.visibility ?? e.visibilityScore);
+  });
+
+  // Calculate deltas for each engine
+  const deltas = current.map((e) => {
+    const name = String(safeGet(e, 'engine', 'unknown')).toLowerCase();
+    const curr = safeNum(e.score ?? e.visibility ?? e.visibilityScore);
+    const prev = priorMap[name] ?? null;
+    const delta = prev !== null ? safeFixed(curr - prev, 1) : null;
+    return { name, curr: safeFixed(curr, 1), prev, delta };
+  }).filter((e) => e.delta !== null);
+
+  if (deltas.length === 0) {
+    lines.push('  No prior period data — trend comparison unavailable.');
+    lines.push('  Current scores:');
+    current.slice(0, 5).forEach((e) => {
+      const rawName = String(safeGet(e, 'engine', 'unknown'));
+      const displayName = ENGINE_DISPLAY_NAMES[rawName] || ENGINE_DISPLAY_NAMES[rawName.toLowerCase()] || rawName;
+      const score = safeFixed(e.score ?? e.visibility ?? e.visibilityScore, 1);
+      lines.push(`  ${displayName.slice(0, 25).padEnd(25)} ${String(score).padStart(5)}`);
+    });
+    lines.push(line());
+    return lines.join('\n');
+  }
+
+  const SWING_THRESHOLD = 5;
+  const gainers = deltas
+    .filter((e) => e.delta > 0)
+    .sort((a, b) => b.delta - a.delta)
+    .slice(0, 3);
+  const losers = deltas
+    .filter((e) => e.delta < 0)
+    .sort((a, b) => a.delta - b.delta)
+    .slice(0, 3);
+
+  lines.push('  TOP GAINERS (vs prior period):');
+  if (gainers.length === 0) {
+    lines.push('  No engines improved this period.');
+  } else {
+    gainers.forEach(({ name, curr, delta }) => {
+      const flag = delta >= SWING_THRESHOLD ? ' ◆' : '';
+      const arrow = '↑';
+      const displayName = ENGINE_DISPLAY_NAMES[name] || ENGINE_DISPLAY_NAMES[name.toLowerCase()] || name;
+      lines.push(
+        `  ${arrow} ${displayName.slice(0, 25).padEnd(25)} ` +
+        `${String(curr).padStart(5)}  +${delta}${flag}`
+      );
+    });
+  }
+
+  lines.push('');
+  lines.push('  TOP LOSERS (vs prior period):');
+  if (losers.length === 0) {
+    lines.push('  No engines declined this period.');
+  } else {
+    losers.forEach(({ name, curr, delta }) => {
+      const flag = Math.abs(delta) >= SWING_THRESHOLD ? ' ◆' : '';
+      const arrow = '↓';
+      const displayName = ENGINE_DISPLAY_NAMES[name] || ENGINE_DISPLAY_NAMES[name.toLowerCase()] || name;
+      lines.push(
+        `  ${arrow} ${displayName.slice(0, 25).padEnd(25)} ` +
+        `${String(curr).padStart(5)}   ${delta}${flag}`
+      );
+    });
+  }
+
+  const swingCount = deltas.filter(
+    (e) => Math.abs(e.delta) >= SWING_THRESHOLD
+  ).length;
+  if (swingCount > 0) {
+    lines.push('');
+    lines.push(`  ◆ = ±${SWING_THRESHOLD}+ point swing (significant)`);
+  }
+
+  lines.push(line());
+  return lines.join('\n');
+}
+
+// ─── Feature E: Sentiment Shift Alert ────────────────────
+/**
+ * Detects significant negative keyword clusters, identifies
+ * sentiment trend direction, and flags risk areas.
+ *
+ * @param {object} sentimentData      - normalizeSentiment() current period
+ * @param {object} priorSentimentData - normalizeSentiment() prior period (may be null)
+ * @returns {string}                  - formatted sentiment alert block
+ */
+function analyzeSentimentShift(sentimentData, priorSentimentData) {
+  const CLUSTER_THRESHOLD = 5; // >5x mentions = significant cluster
+
+  // Flatten keyword lists
+  const toKwList = (arr) =>
+    safeArray(arr).map((k) =>
+      typeof k === 'object' && k !== null
+        ? { keyword: String(k.keyword || k.text || k), count: safeNum(k.count || k.frequency, 1) }
+        : { keyword: String(k), count: 1 }
+    );
+
+  const negKws = toKwList(safeGet(sentimentData, 'negativeKeywords'));
+  const posKws = toKwList(safeGet(sentimentData, 'positiveKeywords'));
+
+  const priorNegKws = toKwList(safeGet(priorSentimentData, 'negativeKeywords'));
+  const priorPosKws = toKwList(safeGet(priorSentimentData, 'positiveKeywords'));
+
+  const lines = [
+    line(),
+    center('SENTIMENT SHIFT ALERT'),
+    line(),
+  ];
+
+  // Trend: compare positive vs negative counts current vs prior
+  const currPos = posKws.reduce((s, k) => s + k.count, 0);
+  const currNeg = negKws.reduce((s, k) => s + k.count, 0);
+  const priorPos = priorPosKws.reduce((s, k) => s + k.count, 0);
+  const priorNeg = priorNegKws.reduce((s, k) => s + k.count, 0);
+
+  // Sentiment polarity: higher = more positive
+  const currPolarity = currPos - currNeg;
+  const priorPolarity = priorPos - priorNeg;
+  const hasPrior = priorSentimentData != null &&
+    (priorPos + priorNeg) > 0;
+
+  let trendLabel = 'stable';
+  let trendIcon = '→';
+  if (hasPrior) {
+    const polarityDelta = currPolarity - priorPolarity;
+    if (polarityDelta > 2) { trendLabel = 'improving'; trendIcon = '↗'; }
+    else if (polarityDelta < -2) { trendLabel = 'declining'; trendIcon = '↘'; }
+  } else if (currPos + currNeg > 0) {
+    // No prior: derive from current balance
+    const ratio = currNeg / (currPos + currNeg || 1);
+    if (ratio > 0.4) { trendLabel = 'at risk'; trendIcon = '↘'; }
+    else if (ratio < 0.2) { trendLabel = 'healthy'; trendIcon = '↗'; }
+  }
+
+  lines.push(
+    `  Sentiment Trend:  ${trendIcon} ${trendLabel.toUpperCase()}`
+  );
+  lines.push('');
+
+  // Negative keyword clusters — high-frequency negatives
+  const avgNegCount = negKws.length > 0
+    ? negKws.reduce((s, k) => s + k.count, 0) / negKws.length
+    : 0;
+  const clusters = negKws
+    .filter((k) => k.count > Math.max(avgNegCount * 2, CLUSTER_THRESHOLD))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3);
+
+  lines.push('  RISK AREAS:');
+  if (clusters.length === 0 && negKws.length === 0) {
+    lines.push('  ✓ No negative keyword clusters detected.');
+  } else if (clusters.length === 0) {
+    lines.push('  No significant negative clusters (below threshold).');
+    // Show top negatives anyway for context
+    const topNeg = negKws.sort((a, b) => b.count - a.count).slice(0, 3);
+    topNeg.forEach((k) => {
+      lines.push(`  ⚠ ${k.keyword.slice(0, 28).padEnd(28)} ${k.count}x`);
+    });
+  } else {
+    clusters.forEach((k) => {
+      lines.push(
+        `  ⚠ ${k.keyword.slice(0, 28).padEnd(28)} ${k.count}x  [CLUSTER]`
+      );
+    });
+    lines.push('');
+    lines.push('  ACTION: Address these topics proactively.');
+  }
+
+  if (trendLabel === 'improving' || trendLabel === 'healthy') {
+    lines.push('');
+    lines.push('  ✓ Sentiment is moving in the right direction.');
+  } else if (trendLabel === 'declining' || trendLabel === 'at risk') {
+    lines.push('');
+    lines.push('  ! Monitor closely — negative signals increasing.');
+  }
+
+  lines.push(line());
+  return lines.join('\n');
+}
+
+// ─── Feature F: Citation Intelligence Hub ────────────────
+/**
+ * Comprehensive citation analysis: authority ranking, gap analysis,
+ * engine preferences, visibility correlation, and PR opportunities.
+ *
+ * @param {object} citationsRaw   - raw citations API response
+ * @param {object} reportData     - normalizeReport() output
+ * @param {Array}  searchTerms    - normalizeSearchTerms() output
+ * @param {string} subMode        - 'full'|'authority'|'gaps'|'engines'|'correlation'|'pr'|''
+ * @returns {string}              - formatted ASCII output
+ */
+function analyzeCitationIntelligence(citationsRaw, reportData, searchTerms, subMode) {
+  // ── Parse sources from raw citations response ──────────
+  const rawSources = safeArray(
+    safeGet(citationsRaw, 'sources') ||
+    safeGet(citationsRaw, 'topSources') ||
+    safeGet(citationsRaw, 'domains') ||
+    safeGet(citationsRaw, 'data.sources') ||
+    safeGet(citationsRaw, 'data.topSources')
+  );
+
+  // Normalise each source entry — handle multiple API shapes
+  const sources = rawSources.map((s) => {
+    if (!s) return null;
+    const domain =
+      String(s.domain || s.url || s.source || s.name || s.host || '').replace(/^https?:\/\//, '').split('/')[0];
+    const frequency = safeNum(s.frequency || s.count || s.citations || s.total, 1);
+    const engines = safeArray(s.engines || s.aiEngines || []);
+    const engineCount = engines.length || safeNum(s.engineCount || s.engines_count, 0);
+    const engine = String(s.engine || s.engineId || s.engineName || '').toLowerCase();
+    const timestamp = s.timestamp || s.date || s.lastSeen || null;
+    return { domain, frequency, engines, engineCount, engine, timestamp };
+  }).filter((s) => s && s.domain);
+
+  // Determine which sections to show
+  const showAll    = !subMode || subMode === 'full';
+  const showA      = showAll || subMode === 'authority';
+  const showB      = showAll || subMode === 'gaps';
+  const showC      = showAll || subMode === 'engines';
+  const showD      = subMode === 'full' || subMode === 'correlation';
+  const showE      = subMode === 'full' || subMode === 'pr';
+
+  const out = [];
+
+  out.push(line('='));
+  out.push(center('CITATION INTELLIGENCE HUB'));
+  out.push(line('='));
+
+  if (sources.length === 0) {
+    out.push('');
+    out.push('  No citation data available.');
+    out.push('  (Citations endpoint returned no sources)');
+    out.push('');
+    out.push('  Try running the default report first to');
+    out.push('  confirm the API key and brand ID are set.');
+    out.push('');
+    out.push('  Sub-commands:');
+    out.push('    --citations authority   Top source ranking');
+    out.push('    --citations gaps        Gap vs competitors');
+    out.push('    --citations engines     Per-engine breakdown');
+    out.push('    --citations correlation Citation↔Visibility');
+    out.push('    --citations full        All sections');
+    out.push(line('='));
+    return out.join('\n');
+  }
+
+  // ── A: Citation Authority Ranking ─────────────────────
+  if (showA) {
+    out.push(...sectionCitationAuthority(sources));
+  }
+
+  // ── B: Citation Gap Analysis ───────────────────────────
+  if (showB) {
+    out.push(...sectionCitationGaps(sources, reportData, searchTerms));
+  }
+
+  // ── C: Engine Citation Preferences ────────────────────
+  if (showC) {
+    out.push(...sectionEnginePreferences(sources, reportData));
+  }
+
+  // ── D: Citation-Visibility Correlation ────────────────
+  if (showD) {
+    out.push(...sectionCitationCorrelation(sources, reportData));
+  }
+
+  // ── E: PR Opportunity Mapper ───────────────────────────
+  if (showE) {
+    out.push(...sectionPROpportunities(sources, reportData));
+  }
+
+  // Footer hint
+  out.push('');
+  out.push('  Sub-commands:');
+  out.push('    --citations authority   Source ranking');
+  out.push('    --citations gaps        Gap vs competitors');
+  out.push('    --citations engines     Per-engine breakdown');
+  out.push('    --citations correlation Citation↔Visibility');
+  out.push('    --citations full        All sections + PR map');
+  out.push(line('='));
+  return out.join('\n');
+}
+
+// ── A helper: Citation Authority Ranking ──────────────────
+function sectionCitationAuthority(sources) {
+  // Aggregate by domain (sources may have one entry per engine per domain)
+  const domainMap = new Map();
+  sources.forEach((s) => {
+    if (!s.domain) return;
+    const existing = domainMap.get(s.domain);
+    if (existing) {
+      existing.frequency += s.frequency;
+      existing.engineCount = Math.max(existing.engineCount, s.engineCount);
+      if (s.engine && !existing.enginesSet.has(s.engine)) {
+        existing.enginesSet.add(s.engine);
+        existing.engineCount = existing.enginesSet.size;
+      }
+    } else {
+      const enginesSet = new Set();
+      if (s.engine) enginesSet.add(s.engine);
+      domainMap.set(s.domain, {
+        domain: s.domain,
+        frequency: s.frequency,
+        engineCount: s.engineCount || (s.engine ? 1 : 0),
+        enginesSet,
+        timestamp: s.timestamp,
+      });
+    }
+  });
+
+  const entries = Array.from(domainMap.values()).map((e) => {
+    const freq = safeNum(e.frequency, 1);
+    const engC = safeNum(e.engineCount || e.enginesSet.size, 1);
+    // Authority score = (frequency * 0.4) + (engine_count * 0.6)
+    // Normalise: freq max ~20, engine_count max ~10 → raw score ~ 0–14
+    const rawScore = freq * 0.4 + engC * 0.6;
+    return { domain: e.domain, frequency: freq, engineCount: engC, rawScore };
+  });
+
+  // Normalise to 0–10 scale
+  const maxRaw = Math.max(...entries.map((e) => e.rawScore), 1);
+  const ranked = entries.map((e) => ({
+    ...e,
+    authorityScore: safeFixed(e.rawScore / maxRaw * 10, 1),
+  })).sort((a, b) => b.authorityScore - a.authorityScore);
+
+  const powerSources = new Set(ranked.slice(0, 5).map((e) => e.domain));
+
+  const lines = [
+    line('-'),
+    center('A. CITATION AUTHORITY SOURCES'),
+    line('-'),
+    '  Top Authority Sources',
+    '',
+  ];
+
+  ranked.slice(0, 8).forEach((e) => {
+    const isPower = powerSources.has(e.domain);
+    const domainStr = e.domain.slice(0, 22);
+    lines.push(`  ◆ ${domainStr}`);
+    lines.push(`    Authority: ${e.authorityScore}/10${isPower ? '  ★' : ''}`);
+    if (e.engineCount > 0) {
+      lines.push(`    Cited in ${e.engineCount} engine${e.engineCount !== 1 ? 's' : ''}`);
+    }
+    lines.push(`    ${e.frequency} citation${e.frequency !== 1 ? 's' : ''} total${isPower ? '  · Power source ★' : ''}`);
+    lines.push('');
+  });
+
+  // Insight: strongest source
+  if (ranked.length > 0) {
+    const top = ranked[0];
+    const domainShort = top.domain.replace(/\.com$/, '').slice(0, 20);
+    lines.push(`  🎯 Insight: ${domainShort} is your strongest`);
+    lines.push(`     citation source (${top.authorityScore}/10). Maintain`);
+    lines.push(`     coverage there.`);
+  }
+
+  return lines;
+}
+
+// ── B helper: Citation Gap Analysis ───────────────────────
+function sectionCitationGaps(sources, reportData, searchTerms) {
+  const lines = [
+    line('-'),
+    center('B. CITATION GAPS (vs Competitors)'),
+    line('-'),
+    '  Domains citing competitors but NOT you',
+    '',
+  ];
+
+  // Build YOUR domain set
+  const yourDomains = new Set(sources.map((s) => s.domain).filter(Boolean));
+
+  // Extract competitor names from reportData
+  const competitors = safeArray(safeGet(reportData, 'competitors'));
+  const compNames = competitors.map((c) =>
+    String(c.name || c.brandName || '').toLowerCase()
+  ).filter(Boolean);
+
+  // Known high-authority review/media sites in SaaS/tech category
+  // that commonly cite brands — used as gap targets if not in yourDomains
+  const AUTHORITY_TARGETS = [
+    { domain: 'g2.com',              authority: 'Very High ★', category: 'Reviews' },
+    { domain: 'capterra.com',        authority: 'Very High ★', category: 'Reviews' },
+    { domain: 'techradar.com',       authority: 'High',        category: 'Tech News' },
+    { domain: 'solutionsreview.com', authority: 'High',        category: 'Reviews' },
+    { domain: 'trustradius.com',     authority: 'High',        category: 'Reviews' },
+    { domain: 'softwareadvice.com',  authority: 'Medium',      category: 'Reviews' },
+    { domain: 'getapp.com',          authority: 'Medium',      category: 'Reviews' },
+    { domain: 'zapier.com',          authority: 'High',        category: 'Integrations' },
+    { domain: 'hubspot.com',         authority: 'Very High ★', category: 'Content Hub' },
+    { domain: 'forbes.com',          authority: 'Very High ★', category: 'Enterprise' },
+  ];
+
+  // Identify gap targets: high-authority domains NOT in yourDomains
+  const gaps = AUTHORITY_TARGETS.filter((t) => !yourDomains.has(t.domain));
+
+  if (gaps.length === 0) {
+    lines.push('  ✓ No major citation gaps found!');
+    lines.push('    All tracked authority sites cite you.');
+    lines.push('');
+    lines.push('  🎯 Tip: Maintain current PR cadence to');
+    lines.push('     keep citation coverage strong.');
+    return lines;
+  }
+
+  gaps.slice(0, 5).forEach((target) => {
+    lines.push(`  ↗ ${target.domain}`);
+    if (compNames.length > 0) {
+      const compSample = compNames.slice(0, 3)
+        .map((n) => n.charAt(0).toUpperCase() + n.slice(1))
+        .join(', ');
+      lines.push(`    Cites: ${compSample.slice(0, 35)}`);
+    }
+    lines.push(`    Cites YOUR brand: ✗ (Opportunity!)`);
+    lines.push(`    Category: ${target.category}`);
+    lines.push(`    Authority: ${target.authority}`);
+    lines.push('');
+  });
+
+  if (gaps.length > 0) {
+    const topGap = gaps[0];
+    lines.push(`  💡 Recommendation: Research`);
+    lines.push(`     ${topGap.domain} for outreach.`);
+    lines.push(`     They cover your category.`);
+  }
+
+  return lines;
+}
+
+// ── C helper: Engine Citation Preferences ─────────────────
+function sectionEnginePreferences(sources, reportData) {
+  const lines = [
+    line('-'),
+    center('C. ENGINE CITATION PREFERENCES'),
+    line('-'),
+    '  Which sources does each engine use?',
+    '',
+  ];
+
+  // Group by engine
+  const engineMap = new Map();
+  sources.forEach((s) => {
+    const eng = s.engine || 'unknown';
+    // Also expand engines[] array if present
+    const enginesForSource = s.engines.length > 0
+      ? s.engines.map((e) => String(e.name || e.engineId || e).toLowerCase())
+      : [eng];
+    enginesForSource.forEach((e) => {
+      if (!e || e === 'unknown') return;
+      if (!engineMap.has(e)) engineMap.set(e, new Map());
+      const domMap = engineMap.get(e);
+      domMap.set(s.domain, (domMap.get(s.domain) || 0) + s.frequency);
+    });
+  });
+
+  if (engineMap.size === 0) {
+    // Fallback: show aggregated domain list without engine breakdown
+    lines.push('  Engine-level data not available.');
+    lines.push('  Showing aggregated top sources:');
+    lines.push('');
+    // Aggregate across all sources
+    const domAgg = new Map();
+    sources.forEach((s) => {
+      domAgg.set(s.domain, (domAgg.get(s.domain) || 0) + s.frequency);
+    });
+    const sorted = Array.from(domAgg.entries()).sort((a, b) => b[1] - a[1]);
+    sorted.slice(0, 5).forEach(([dom, freq]) => {
+      lines.push(`  • ${dom.slice(0, 30).padEnd(30)} ${freq}x`);
+    });
+    lines.push('');
+    lines.push('  💡 Tip: Per-engine breakdown requires');
+    lines.push('     engine field in citations response.');
+    return lines;
+  }
+
+  // Per-engine listing
+  const reportEngines = safeGet(reportData, 'engines', {});
+  const engineNames = Array.from(engineMap.keys()).sort();
+
+  engineNames.forEach((eng) => {
+    const domMap = engineMap.get(eng);
+    const totalCitations = Array.from(domMap.values()).reduce((a, b) => a + b, 0);
+    const topDoms = Array.from(domMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4);
+
+    const engLabel = ENGINE_DISPLAY_NAMES[eng] || ENGINE_DISPLAY_NAMES[eng.toLowerCase()] || (eng.charAt(0).toUpperCase() + eng.slice(1));
+    lines.push(`  ${engLabel} (${totalCitations} citations)`);
+    topDoms.forEach(([dom, freq]) => {
+      lines.push(`    • ${dom.slice(0, 28)} (${freq}x)`);
+    });
+    lines.push('');
+  });
+
+  // Insight: find engine with lowest citation count → opportunity
+  const engineTotals = Array.from(engineMap.entries()).map(([eng, domMap]) => ({
+    eng,
+    total: Array.from(domMap.values()).reduce((a, b) => a + b, 0),
+  })).sort((a, b) => a.total - b.total);
+
+  if (engineTotals.length > 1) {
+    const weakest = engineTotals[0];
+    const engLabel = ENGINE_DISPLAY_NAMES[weakest.eng] || ENGINE_DISPLAY_NAMES[weakest.eng.toLowerCase()] || (weakest.eng.charAt(0).toUpperCase() + weakest.eng.slice(1));
+    lines.push(`  💡 Insight: ${engLabel} has fewest`);
+    lines.push(`     citations (${weakest.total}x). Priority`);
+    lines.push(`     target for new content.`);
+  }
+
+  return lines;
+}
+
+// ── D helper: Citation-Visibility Correlation ─────────────
+function sectionCitationCorrelation(sources, reportData) {
+  const lines = [
+    line('-'),
+    center('D. CITATION ↔ VISIBILITY CORRELATION'),
+    line('-'),
+    '  Does citation strength match visibility?',
+    '',
+  ];
+
+  // Build per-engine citation counts
+  const engCitMap = new Map();
+  sources.forEach((s) => {
+    const enginesForSource = s.engines.length > 0
+      ? s.engines.map((e) => String(e.name || e.engineId || e).toLowerCase())
+      : (s.engine ? [s.engine] : []);
+    enginesForSource.forEach((e) => {
+      if (!e) return;
+      engCitMap.set(e, (engCitMap.get(e) || 0) + s.frequency);
+    });
+  });
+
+  const reportEngines = safeGet(reportData, 'engines', {});
+  const engVisMap = new Map(
+    Object.entries(reportEngines).map(([k, v]) => [k.toLowerCase(), safeNum(v)])
+  );
+
+  // Find engines with both citation and visibility data
+  const combined = new Map();
+  engCitMap.forEach((cit, eng) => {
+    if (engVisMap.has(eng)) {
+      combined.set(eng, { citations: cit, visibility: engVisMap.get(eng) });
+    }
+  });
+  engVisMap.forEach((vis, eng) => {
+    if (!combined.has(eng)) {
+      combined.set(eng, { citations: engCitMap.get(eng) || 0, visibility: vis });
+    }
+  });
+
+  if (combined.size === 0) {
+    lines.push('  Insufficient data for correlation.');
+    lines.push('  Need both engine citations and visibility.');
+    lines.push('');
+    lines.push('  Run default report + --citations to');
+    lines.push('  populate both data sources.');
+    return lines;
+  }
+
+  // Classify each engine
+  const entries = Array.from(combined.entries()).map(([eng, { citations, visibility }]) => {
+    return { eng, citations, visibility };
+  });
+
+  // Thresholds: median-based classification
+  const citCounts = entries.map((e) => e.citations).sort((a, b) => a - b);
+  const visCounts = entries.map((e) => e.visibility).sort((a, b) => a - b);
+  const medCit = citCounts[Math.floor(citCounts.length / 2)] || 1;
+  const medVis = visCounts[Math.floor(visCounts.length / 2)] || 1;
+
+  const aligned = entries.filter((e) =>
+    (e.citations >= medCit && e.visibility >= medVis) ||
+    (e.citations < medCit && e.visibility < medVis)
+  );
+  const highCitLowVis = entries.filter((e) =>
+    e.citations >= medCit && e.visibility < medVis
+  );
+  const lowCitHighVis = entries.filter((e) =>
+    e.citations < medCit && e.visibility >= medVis
+  );
+
+  if (aligned.length > 0) {
+    lines.push('  ✓ Aligned (citations match visibility):');
+    aligned.slice(0, 3).forEach((e) => {
+      const engLabel = e.eng.charAt(0).toUpperCase() + e.eng.slice(1).slice(0, 14);
+      lines.push(`    • ${engLabel.padEnd(14)}: ${e.citations} cit → ${safeFixed(e.visibility, 0)}% vis ✓`);
+    });
+    lines.push('');
+  }
+
+  if (highCitLowVis.length > 0) {
+    lines.push('  ⚠ Gaps (high citations, low visibility):');
+    highCitLowVis.slice(0, 3).forEach((e) => {
+      const engLabel = e.eng.charAt(0).toUpperCase() + e.eng.slice(1).slice(0, 14);
+      lines.push(`    • ${engLabel.padEnd(14)}: ${e.citations} cit → ${safeFixed(e.visibility, 0)}% vis ❌`);
+    });
+    lines.push('');
+    lines.push('  💡 High citations, low visibility =');
+    lines.push('     content quality issue. Review');
+    lines.push('     your answer format on these engines.');
+    lines.push('');
+  }
+
+  if (lowCitHighVis.length > 0) {
+    lines.push('  🎯 Wins (low citations, high visibility):');
+    lowCitHighVis.slice(0, 2).forEach((e) => {
+      const engLabel = e.eng.charAt(0).toUpperCase() + e.eng.slice(1).slice(0, 14);
+      lines.push(`    • ${engLabel.padEnd(14)}: ${e.citations} cit → ${safeFixed(e.visibility, 0)}% vis ✓`);
+    });
+    lines.push('');
+    lines.push('  💡 Efficient! Minimal citations needed.');
+  }
+
+  return lines;
+}
+
+// ── E helper: PR Opportunity Mapper ───────────────────────
+function sectionPROpportunities(sources, reportData) {
+  const lines = [
+    line('-'),
+    center('E. PR OPPORTUNITY TARGETS'),
+    line('-'),
+    '  Non-competitors you should pitch to',
+    '',
+  ];
+
+  // Build your domain set
+  const yourDomains = new Set(sources.map((s) => s.domain).filter(Boolean));
+
+  // High-authority PR targets by category + authority score (out of 10)
+  const PR_TARGETS = [
+    { domain: 'techcrunch.com',      auth: 10, category: 'Tech Startups',   angle: 'Growth story / funding' },
+    { domain: 'forbes.com',          auth: 10, category: 'Enterprise',       angle: 'Thought leadership' },
+    { domain: 'techradar.com',       auth:  9, category: 'Tech Reviews',     angle: 'Comparison / review' },
+    { domain: 'venturebeat.com',     auth:  9, category: 'AI & Enterprise',  angle: 'AI use case study' },
+    { domain: 'g2.com',              auth:  9, category: 'Reviews',          angle: 'Customer review push' },
+    { domain: 'capterra.com',        auth:  8, category: 'Reviews',          angle: 'Category leader claim' },
+    { domain: 'zapier.com',          auth:  8, category: 'Integrations',     angle: 'Integration spotlight' },
+    { domain: 'solutionsreview.com', auth:  7, category: 'Reviews',          angle: 'Feature comparison' },
+    { domain: 'businessinsider.com', auth:  9, category: 'Business',         angle: 'Trend / market story' },
+    { domain: 'wired.com',           auth:  9, category: 'Technology',       angle: 'Innovation narrative' },
+  ];
+
+  const competitors = safeArray(safeGet(reportData, 'competitors'));
+  const compNames = competitors.map((c) =>
+    String(c.name || c.brandName || '').toLowerCase()
+  ).filter(Boolean);
+
+  // Prioritise: targets NOT already citing you + not your competitors
+  const opportunities = PR_TARGETS
+    .filter((t) => !yourDomains.has(t.domain))
+    .map((t) => ({
+      ...t,
+      priority: t.auth >= 9 ? 'HIGH' : t.auth >= 7 ? 'MEDIUM' : 'LOW',
+      citesCompetitors: compNames.length > 0, // Assume they cover the category
+    }))
+    .sort((a, b) => b.auth - a.auth);
+
+  if (opportunities.length === 0) {
+    lines.push('  ✓ You already have coverage on all');
+    lines.push('    tracked PR targets. Well done!');
+    lines.push('');
+    lines.push('  Consider expanding to niche vertical');
+    lines.push('  publications for deeper coverage.');
+    return lines;
+  }
+
+  const high = opportunities.filter((o) => o.priority === 'HIGH');
+  const medium = opportunities.filter((o) => o.priority === 'MEDIUM');
+
+  if (high.length > 0) {
+    lines.push('  🌟 HIGH PRIORITY');
+    high.slice(0, 3).forEach((o) => {
+      lines.push(`    ${o.domain}`);
+      lines.push(`      Auth: ${o.auth}/10  · ${o.category}`);
+      lines.push(`      Angle: ${o.angle.slice(0, 35)}`);
+      if (o.citesCompetitors) {
+        lines.push(`      Covers your space ✓`);
+      }
+      lines.push('');
+    });
+  }
+
+  if (medium.length > 0) {
+    lines.push('  ⬆ MEDIUM PRIORITY');
+    medium.slice(0, 3).forEach((o) => {
+      lines.push(`    ${o.domain}`);
+      lines.push(`      Auth: ${o.auth}/10  · ${o.angle.slice(0, 30)}`);
+      lines.push('');
+    });
+  }
+
+  return lines;
 }
 
 // ─── ASCII Renderer ───────────────────────────────────────
@@ -1220,7 +1964,11 @@ function renderReport(data, insights, brandId, competitors) {
   const engineEntries = Object.entries(report.engines || {});
   if (engineEntries.length > 0) {
     const engStr = engineEntries
-      .map(([k, v]) => `${k}:${v}`)
+      .map(([k, v]) => {
+        const label = ENGINE_DISPLAY_NAMES[k] ||
+          ENGINE_DISPLAY_NAMES[k.toLowerCase()] || k;
+        return `${label}:${v}`;
+      })
       .join(' | ');
     lines.push(`  ENGINES:       ${engStr.slice(0, WIDTH - 17)}`);
   }
@@ -1287,12 +2035,16 @@ function showOnboarding() {
         center('RANKSCALE SETUP REQUIRED'),
         line('='),
         '',
-        '  To use GEO Analytics, you need a Rankscale account.',
+        '  To use GEO Analytics, you need a Rankscale PRO account.',
+        '  ⚠  Note: PRO account required for REST API access.',
+        '     Trial accounts do NOT have API access.',
+        '     Upgrade to PRO at: https://rankscale.ai/dashboard/signup',
         '',
-        '  1. Sign up at: https://app.rankscale.ai/signup',
+        '  1. Sign up at: https://rankscale.ai/dashboard/signup (PRO plan)',
         '  2. Create your brand profile',
-        '  3. Copy your API key from Settings > API',
-        '  4. Set environment variables:',
+        '  3. Email support@rankscale.ai to activate REST API access',
+        '  4. Copy your API key from Settings > API',
+        '  5. Set environment variables:',
         '',
         '     export RANKSCALE_API_KEY=rk_xxxxx_yyyyy',
         '     export RANKSCALE_BRAND_ID=yyyyy',
@@ -1443,7 +2195,8 @@ async function run(args = {}) {
 
   // ── GEO feature flags ─────────────────────────────────
   const geoMode =
-    args.engineProfile || args.gapAnalysis || args.reputation;
+    args.engineProfile || args.gapAnalysis || args.reputation ||
+    args.engineMovers || args.sentimentAlerts || args.citations;
 
   if (geoMode) {
     if (args.engineProfile) {
@@ -1454,6 +2207,21 @@ async function run(args = {}) {
     }
     if (args.reputation) {
       console.log(computeReputationScore(data.sentiment));
+    }
+    if (args.engineMovers) {
+      console.log(analyzeEngineMovers(data.report, null));
+    }
+    if (args.sentimentAlerts) {
+      console.log(analyzeSentimentShift(data.sentiment, null));
+    }
+    if (args.citations) {
+      // Pass raw citations response for richer parsing
+      const citRaw = citationsRaw || citationsData;
+      console.log(
+        analyzeCitationIntelligence(
+          citRaw, data.report, data.searchTerms, args.citationsMode
+        )
+      );
     }
   } else {
     // Default: full report
@@ -1503,6 +2271,18 @@ if (require.main === module) {
       args.gapAnalysis = true;
     } else if (arg === '--reputation') {
       args.reputation = true;
+    } else if (arg === '--engine-movers' || arg === '--engine-trends') {
+      args.engineMovers = true;
+    } else if (arg === '--sentiment-alerts') {
+      args.sentimentAlerts = true;
+    } else if (arg === '--citations' || arg === '--citation-intelligence') {
+      args.citations = true;
+      // Optional sub-mode: --citations [full|authority|gaps|engines|correlation|pr]
+      const next = process.argv[i + 1];
+      if (next && !next.startsWith('--')) {
+        args.citationsMode = next;
+        i++;
+      }
     } else if (arg === '--help' || arg === '-h') {
       console.log([
         'Usage: node rankscale-skill.js [options]',
@@ -1515,11 +2295,20 @@ if (require.main === module) {
         '  --engine-profile     Engine strength heatmap',
         '  --gap-analysis       Content gap analysis',
         '  --reputation         Reputation score & summary',
+        '  --engine-movers      Engine gainers & losers vs prior period',
+        '  --sentiment-alerts   Sentiment shift & risk cluster alert',
+        '  --citations [mode]   Citation Intelligence Hub',
+        '                       modes: authority|gaps|engines|correlation|full',
+        '  --citation-intelligence  Alias for --citations',
         '  --help               Show this help',
         '',
         'Environment Variables:',
         '  RANKSCALE_API_KEY    API key',
         '  RANKSCALE_BRAND_ID   Brand ID',
+        '',
+        'Requirements:',
+        '  - Rankscale PRO account (trial accounts do not have REST API access)',
+        '  - REST API must be activated by support (support@rankscale.ai)',
         '',
         'Examples:',
         '  RANKSCALE_API_KEY=xxx node rankscale-skill.js \\',
@@ -1567,6 +2356,15 @@ module.exports = {
   analyzeEngineStrength,
   analyzeContentGaps,
   computeReputationScore,
+  analyzeEngineMovers,
+  analyzeSentimentShift,
+  // Citation Intelligence (ROA-40 crown jewel)
+  analyzeCitationIntelligence,
+  sectionCitationAuthority,
+  sectionCitationGaps,
+  sectionEnginePreferences,
+  sectionCitationCorrelation,
+  sectionPROpportunities,
   // Errors
   AuthError,
   NotFoundError,

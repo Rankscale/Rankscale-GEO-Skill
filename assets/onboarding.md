@@ -2,7 +2,7 @@
 
 ## No Rankscale Account Yet?
 
-**Visit:** https://rankscale.ai
+**Visit:** https://rankscale.ai/dashboard/signup
 
 Click **Start Free Trial** to sign up (14 days, no credit card).
 

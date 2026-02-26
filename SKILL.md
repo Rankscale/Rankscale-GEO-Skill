@@ -19,8 +19,10 @@ Ask your assistant questions like:
 
 ## Quick Start (3 Steps)
 
-**Step 1 — Create a Rankscale Account**
-Sign up at [rankscale.ai](https://rankscale.ai) and set up your brand profile.
+**Step 1 — Create a Rankscale Account** *(PRO account required — trial not sufficient)*
+Sign up at [rankscale.ai](https://rankscale.ai/dashboard/signup) and set up your brand profile.
+
+> **⚠️ Requirements:** A **Rankscale PRO account** (or higher) is required. Trial accounts do not have REST API access. You must be on PRO before requesting API activation.
 
 **Step 2 — Activate REST API Access**
 Email `support@rankscale.ai` with the subject: _"Please activate REST API access"_
@@ -277,6 +279,6 @@ Enhancements planned for future versions:
 Questions? We are happy to support.
 
 📧 `support@rankscale.ai`
-🌐 [rankscale.ai](https://rankscale.ai)
+🌐 [rankscale.ai](https://rankscale.ai/dashboard/signup)
 
 See also: [`references/onboarding.md`](references/onboarding.md) for setup and first-run guidance.

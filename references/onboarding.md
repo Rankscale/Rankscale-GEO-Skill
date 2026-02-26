@@ -20,8 +20,9 @@ We are happy to support.
 
 Users must have:
 
-1. **A Rankscale Account**
-   - Sign up at: https://rankscale.ai
+1. **A Rankscale PRO Account** *(trial accounts do not support REST API)*
+   - Sign up at: https://rankscale.ai/dashboard/signup
+   - **Note: PRO account required.** Trial accounts do not have REST API access and cannot use this skill. Upgrade to PRO before proceeding.
    - Create brand profile for domain/product
 
 2. **REST API Activation**
@@ -57,8 +58,10 @@ assistant for:
 🚀  Getting Started
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. Create a Rankscale Account
-   → https://rankscale.ai
+1. Create a Rankscale Account (PRO plan required)
+   → https://rankscale.ai/dashboard/signup
+   ⚠️  Trial accounts do NOT have REST API access.
+       You must be on a PRO plan for this skill to work.
 
 2. Contact Support
    → support@rankscale.ai
@@ -95,7 +98,8 @@ tracking for ChatGPT, Perplexity, Gemini, Claude,
 DeepSeek, Mistral, and more.
 
 SETUP:
-  1. Create Rankscale account (rankscale.ai)
+  1. Create Rankscale account — PRO plan required
+     (rankscale.ai/dashboard/signup — trial not sufficient)
   2. Contact support@rankscale.ai to activate REST API
   3. Set RANKSCALE_API_KEY + RANKSCALE_BRAND_ID
   4. Run skill commands
@@ -123,8 +127,12 @@ When credentials missing:
 Set RANKSCALE_API_KEY and RANKSCALE_BRAND_ID 
 to get started.
 
+Note: PRO account required for REST API access.
+Trial accounts do not have API access — upgrade at:
+  → https://rankscale.ai/dashboard/signup
+
 Need help?
-  → Sign up: https://rankscale.ai
+  → Sign up: https://rankscale.ai/dashboard/signup
   → API access: support@rankscale.ai
   → Docs: [link to skill docs]
 

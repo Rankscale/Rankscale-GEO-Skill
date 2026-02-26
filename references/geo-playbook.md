@@ -1,6 +1,6 @@
 # GEO Analytics Playbook — Interpretation Rules & Recommendation Patterns
 
-**Version:** 1.0.0  
+**Version:** 1.0.1  
 **Scope:** Rankscale GEO Analytics Skill (RS-126)  
 **Audience:** Skill developers + AI assistants using this skill
 

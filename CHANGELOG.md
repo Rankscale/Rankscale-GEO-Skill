@@ -9,7 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [1.0.1] - 2026-02-26
+
+Feature release adding 7 new analytics features, null-safety hardening, and documentation expansion.
+
 ### Added
+
+#### Analytics Features (7 New)
+
+- **Engine Strength Profile** (`--engine-profile`) — Visibility heatmap across 12+ AI engines; shows top-3 (✦) and bottom-3 (▼) performers with delta vs prior period
+- **Content Gap Analysis** (`--gap-analysis`) — Identifies topics and queries with low or zero brand visibility; surfaces engine-specific gaps and actionable content recommendations
+- **Reputation Score** (`--reputation`) — Sentiment-based brand health score (0–100) with full positive/neutral/negative breakdown and risk flag detection
+- **Engine Gainers & Losers** (`--engine-movers`) — Tracks per-engine visibility changes vs prior period; highlights fast-rising and fast-falling engines
+- **Sentiment Shift Alerts** (`--sentiment-alerts`) — Trend detection for emerging sentiment changes; surfaces risk keyword clusters before they escalate
+- **Citation Intelligence Hub** (`--citations`) — Authority-ranked citation analysis, gap detection (where brand should appear but doesn't), engine citation preferences, and PR opportunity targeting
+- **Default GEO Report** (no flag) — Quick full visibility overview combining all primary metrics for daily brand health checks
 
 #### Response Parsing Robustness
 
@@ -19,6 +35,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `safeArray(val)` — always returns an array (never null/undefined)
 - `fetchCitations(apiKey, brandId)` — standalone citations endpoint (separate from report)
 - `fetchSentiment(apiKey, brandId)` — standalone sentiment endpoint (separate from report)
+
+#### Documentation
+
+- `references/FEATURES.md` — Feature-by-feature guide with sample outputs for all 7 analytics modes
+- `references/COMMANDS.md` — Quick-reference command table with all CLI flags and descriptions
+- `references/EXAMPLES.md` — Real-world usage examples from live API testing (ROA-40, 2026-02-26)
+- `references/TROUBLESHOOTING.md` — Common errors, causes, and step-by-step fixes
+- `references/presentation-style.md` — Metric presentation style guide to match Rankscale app dashboard
+- `references/onboarding.md` — Expanded onboarding reference (markdown format, cross-linked)
 
 ### Fixed
 
@@ -33,6 +58,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **F8 — DATA:** Double-normalization of report-embedded sentiment → standalone fetch takes priority, report values are fallback
 - **F9 — CRASH:** `t.aiSearchEngines.length` on undefined → added `Array.isArray(t.aiSearchEngines)` guard
 
+#### Polish & UX
+
+- Engine names normalized to match Rankscale app labels (e.g., "ChatGPT" not "openai")
+- Output width standardized to 55 characters across all 7 feature modes
+- Sentiment UX improved: "Neg" label changed to "Risk" in alert contexts for clarity
+
 #### API Integration
 
 - Parallel fetch orchestration: report + citations + sentiment fetched concurrently (8.7s typical vs. sequential 25s+)
@@ -40,15 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Error handling: per-endpoint failures don't block final report
 - Rate limit awareness: respects X-RateLimit headers, backs off on 429
 
-#### Validation & Testing
-
-- All normalizers rewritten with null-safety guards
-- 38/38 unit tests passing
-- All 6 API endpoints live-tested
-- Zero crashes on null/undefined/empty inputs
-- Fallback paths verified working
-
-### Known Issues (Follow-up)
+### Known Issues (Non-blocking)
 
 - **BUG-1:** `normalizeCitations` doesn't unwrap API envelope — can't parse standalone `/metricsV1Citations` response (still works via report fallback)
 - **BUG-2:** `normalizeSentiment` doesn't parse `brandSentiments[]` format — can't parse standalone `/metricsV1Sentiment` response (still works via report fallback)
@@ -151,5 +174,6 @@ Rule deduplication logic: R2 supersedes R1 when both citation thresholds fire. M
 
 ---
 
-[Unreleased]: https://github.com/Mathias-RS/RS-Skill/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/Mathias-RS/RS-Skill/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/Mathias-RS/RS-Skill/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/Mathias-RS/RS-Skill/releases/tag/v1.0.0

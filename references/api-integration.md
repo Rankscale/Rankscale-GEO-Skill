@@ -16,7 +16,7 @@ GET /v1/metrics/brands HTTP/1.1
 Host: app.rankscale.ai
 Authorization: Bearer rk_YOUR_API_KEY_HERE
 Content-Type: application/json
-User-Agent: openclaw-rs-geo-analytics/1.0.0
+User-Agent: openclaw-rs-geo-analytics/1.0.1
 ```
 
 ### API Key Format
