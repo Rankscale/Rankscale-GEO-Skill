@@ -286,9 +286,9 @@ async function fetchSearchTermsReport(apiKey, brandId) {
   return apiRequest('v1/metrics/search-terms-report', apiKey, 'POST', { brandId });
 }
 
-/** POST /metricsV1SearchTerms — raw search terms */
+/** GET /metricsV1SearchTerms — raw search terms (query param) */
 async function fetchSearchTerms(apiKey, brandId) {
-  return apiRequest('v1/metrics/search-terms', apiKey, 'POST', { brandId });
+  return apiRequest(`v1/metrics/search-terms?brandId=${brandId}`, apiKey, 'GET');
 }
 
 /**
