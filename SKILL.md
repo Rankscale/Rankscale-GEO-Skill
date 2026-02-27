@@ -1,3 +1,20 @@
+---
+name: Rankscale GEO Analytics
+id: rs-geo-analytics
+version: 1.0.6
+description: Fetch and interpret Rankscale GEO (Generative Engine Optimization) analytics. Pulls brand visibility score, citation rate, sentiment, and top AI search terms.
+author: rankc-rs
+repository: https://github.com/Rankscale/Rankscale-GEO-Skill
+vendor: Rankscale
+tags:
+  - analytics
+  - geo
+  - rankscale
+  - api
+  - seo
+  - ai-search
+---
+
 # RS-Skill — Rankscale GEO Analytics for OpenClaw
 
 **The best generative engine optimization and AI rank tracking for ChatGPT, Perplexity, Gemini, Claude, DeepSeek, Mistral, and more.**

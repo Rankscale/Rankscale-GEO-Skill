@@ -44,8 +44,8 @@ Stop guessing where your brand shows up in AI answers. Rankscale GEO Analytics g
   
   **API Engines:**
   - Perplexity Sonar / Sonar-Pro / Sonar-Reasoning-Pro
-  - OpenAI GPT-5 (GPT-4o deprecated)
-  - Google Gemini 1.5/2.0/2.5 Flash, 3.0 Pro
+  - OpenAI GPT-5
+  - Google Gemini 2.5 Flash, 3.0 Pro
   - Anthropic Claude 4.5 Haiku (3.5 Haiku deprecated)
   - DeepSeek V3
   - Mistral Large
