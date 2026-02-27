@@ -712,7 +712,7 @@ The skill automatically retries with exponential backoff (1s, 2s, 4s + jitter, m
 **Symptom:** `Connection failed — check your internet connection`
 
 - Verify internet connectivity
-- The Rankscale API base URL is `https://rankscale.ai/api/v1`
+- The Rankscale API base URL is `https://rankscale.ai/v1/metrics`
 - The skill retries once before failing with partial data or a graceful error
 
 ---

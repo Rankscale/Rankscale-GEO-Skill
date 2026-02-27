@@ -4,7 +4,7 @@
 
 This skill integrates with the Rankscale Metrics API to fetch GEO (Generative Engine Optimization) analytics data.
 
-**Base URL:** `https://rankscale.ai/api`
+**Base URL:** `https://rankscale.ai/v1/metrics`
 
 **Auth:** `Authorization: Bearer <RANKSCALE_API_KEY>`
 
@@ -16,11 +16,11 @@ All endpoints require Bearer token authentication.
 
 ### Reporting Endpoints
 
-#### POST /v1/metrics/report
+#### POST /report
 **Get GEO visibility report for a brand**
 
 ```bash
-curl -X POST "https://rankscale.ai/api/v1/metrics/report" \
+curl -X POST "https://rankscale.ai/v1/metrics/report" \
   -H "Authorization: Bearer rk_YOUR_API_KEY_HERE" \
   -H "Content-Type: application/json" \
   -d '{"brandId": "YOUR_BRAND_ID"}'
@@ -37,21 +37,21 @@ Response:
 }
 ```
 
-#### POST /v1/metrics/search-terms-report
+#### POST /search-terms-report
 **Get search terms with detection metrics**
 
 ```bash
-curl -X POST "https://rankscale.ai/api/v1/metrics/search-terms-report" \
+curl -X POST "https://rankscale.ai/v1/metrics/search-terms-report" \
   -H "Authorization: Bearer rk_YOUR_API_KEY_HERE" \
   -H "Content-Type: application/json" \
   -d '{"brandId": "YOUR_BRAND_ID"}'
 ```
 
-#### POST /v1/metrics/sentiment
+#### POST /sentiment
 **Get sentiment analysis for the brand**
 
 ```bash
-curl -X POST "https://rankscale.ai/api/v1/metrics/sentiment" \
+curl -X POST "https://rankscale.ai/v1/metrics/sentiment" \
   -H "Authorization: Bearer rk_YOUR_API_KEY_HERE" \
   -H "Content-Type: application/json" \
   -d '{"brandId": "YOUR_BRAND_ID"}'
@@ -67,11 +67,11 @@ Response:
 }
 ```
 
-#### POST /v1/metrics/citations
+#### POST /citations
 **Get citation metrics and sources**
 
 ```bash
-curl -X POST "https://rankscale.ai/api/v1/metrics/citations" \
+curl -X POST "https://rankscale.ai/v1/metrics/citations" \
   -H "Authorization: Bearer rk_YOUR_API_KEY_HERE" \
   -H "Content-Type: application/json" \
   -d '{"brandId": "YOUR_BRAND_ID"}'
@@ -79,11 +79,11 @@ curl -X POST "https://rankscale.ai/api/v1/metrics/citations" \
 
 ### Utility Endpoints
 
-#### GET /v1/metrics/brands
+#### GET /brands
 **List all tracked brands**
 
 ```bash
-curl -X GET "https://rankscale.ai/api/v1/metrics/brands" \
+curl -X GET "https://rankscale.ai/v1/metrics/brands" \
   -H "Authorization: Bearer rk_YOUR_API_KEY_HERE"
 ```
 
@@ -99,11 +99,11 @@ Response:
 }
 ```
 
-#### GET /v1/metrics/search-terms
+#### GET /search-terms
 **Get raw search terms tracked for the brand**
 
 ```bash
-curl -X GET "https://rankscale.ai/api/v1/metrics/search-terms?brandId=YOUR_BRAND_ID" \
+curl -X GET "https://rankscale.ai/v1/metrics/search-terms?brandId=YOUR_BRAND_ID" \
   -H "Authorization: Bearer rk_YOUR_API_KEY_HERE"
 ```
 
@@ -144,7 +144,7 @@ JavaScript/Node.js:
 ```javascript
 const apiKey = process.env.RANKSCALE_API_KEY;
 const brandId = process.env.RANKSCALE_BRAND_ID;
-const base = 'https://rankscale.ai/api';
+const base = 'https://rankscale.ai/v1/metrics';
 
 async function fetch_api(path, method = 'GET', body = null) {
   const res = await fetch(`${base}/${path}`, {
@@ -156,13 +156,13 @@ async function fetch_api(path, method = 'GET', body = null) {
 }
 
 // Fetch brands
-const brands = await fetch_api('v1/metrics/brands');
+const brands = await fetch_api('brands');
 
 // Fetch report
-const report = await fetch_api('v1/metrics/report', 'POST', { brandId });
+const report = await fetch_api('report', 'POST', { brandId });
 
 // Fetch search terms
-const searchTerms = await fetch_api(`v1/metrics/search-terms?brandId=${brandId}`);
+const searchTerms = await fetch_api(`search-terms?brandId=${brandId}`);
 ```
 
 ## Support
