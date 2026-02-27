@@ -9,10 +9,19 @@ metadata:
         - RANKSCALE_API_KEY
       bins:
         - node
+      config:
+        - .env
     primaryEnv: RANKSCALE_API_KEY
+    always: false
+    skillKey: rankscale
     emoji: 📊
-    homepage: https://github.com/Rankscale/Rankscale-GEO-Skill
+    homepage: https://rankscale.ai
+    os: []
+    install:
+      - kind: node
+        bins: [node]
 ---
+
 
 
 
