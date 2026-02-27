@@ -1,14 +1,26 @@
 {
   "id": "rs-geo-analytics",
   "name": "Rankscale GEO Analytics",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Fetch and interpret Rankscale GEO (Generative Engine Optimization) analytics. Pulls brand visibility score, citation rate, sentiment, and top AI search terms. Generates actionable GEO insights using 7 interpretation rules.",
   "author": "rankc-rs",
   "homepage": "https://github.com/Rankscale/Rankscale-GEO-Skill",
   "repository": "https://github.com/Rankscale/Rankscale-GEO-Skill",
+  "source": "https://github.com/Rankscale/Rankscale-GEO-Skill",
+  "vendor": "Rankscale",
+  "support": "support@rankscale.ai",
   "entrypoint": "rankscale-skill.js",
   "runtime": "node",
   "nodeVersion": ">=16",
+  "requires": {
+    "env": [
+      "RANKSCALE_API_KEY"
+    ],
+    "bins": [
+      "node"
+    ]
+  },
+  "primaryCredential": "RANKSCALE_API_KEY",
   "triggers": [
     "rankscale",
     "geo analytics",
@@ -27,13 +39,13 @@
   "credentials": [
     {
       "key": "RANKSCALE_API_KEY",
-      "description": "Rankscale API key (required). Format: rk_<hash>_<brandId>. Obtain from https://rankscale.ai/dashboard/settings. This is a sensitive Bearer token — do not share or commit to version control.",
+      "description": "REQUIRED: Rankscale API key for authenticating with the Rankscale Metrics API. Format: rk_<hash>_<brandId>. Obtain from https://rankscale.ai/dashboard/settings. This is a sensitive Bearer token — do not share or commit to version control.",
       "required": true,
       "sensitive": true
     },
     {
       "key": "RANKSCALE_BRAND_ID",
-      "description": "Rankscale Brand ID (optional). Automatically extracted from API key suffix if not provided. Set only if you need to query a different brand than the one encoded in your API key.",
+      "description": "OPTIONAL: Rankscale Brand ID. Automatically extracted from API key suffix if not provided. Set only if you need to query a different brand than the one encoded in your API key.",
       "required": false
     }
   ],
@@ -44,7 +56,8 @@
   },
   "references": [
     "references/api-integration.md",
-    "references/geo-playbook.md"
+    "references/geo-playbook.md",
+    "API_ENDPOINT_CLARIFICATION.md"
   ],
   "assets": [
     "assets/onboarding.md"
