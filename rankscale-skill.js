@@ -2011,7 +2011,7 @@ function renderReport(data, insights, brandId, competitors) {
   lines.push(line('-'));
   // Footer: "  Full report: " = 15 chars; URL max 40 chars → total 55
   const footerUrl =
-    `https://rankscale.ai/brands/${brandId}`.slice(0, 40);
+    `https://rankscale.ai/dashboard/brands/${brandId}`.slice(0, 40);
   lines.push(`  Full report: ${footerUrl}`);
   lines.push(line('='));
 
@@ -2133,7 +2133,7 @@ async function run(args = {}) {
       console.error(`  Error: ${err.message}`);
       if (err instanceof AuthError) {
         console.error(
-          '  Check your API key at https://app.rankscale.ai/settings'
+          '  Check your API key at https://rankscale.ai/dashboard/settings'
         );
       }
       process.exit(1);
@@ -2236,7 +2236,7 @@ function handleFetchError(err, context) {
   if (err instanceof AuthError) {
     console.error(`  Auth error fetching ${context}: ${err.message}`);
     console.error(
-      '  Verify your key at https://app.rankscale.ai/settings/api'
+      '  Verify your key at https://rankscale.ai/dashboard/settings/api'
     );
     process.exit(1);
   } else if (err instanceof NotFoundError) {

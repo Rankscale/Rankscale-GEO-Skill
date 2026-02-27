@@ -108,7 +108,7 @@ Sample output (healthy brand):
   Double down on formats producing citations.
   Consider expanding to adjacent topics.
 -------------------------------------------------------
-  Full report: https://app.rankscale.ai/brands/[your-brand]
+  Full report: https://rankscale.ai/dashboard/brands/[your-brand]
 =======================================================
 ```
 

@@ -53,7 +53,7 @@ A 14-day free trial is available (no credit card required).
 
 ### Step 2 — Add your brand
 
-From the Rankscale dashboard (`https://app.rankscale.ai`):
+From the Rankscale dashboard (`https://rankscale.ai/dashboard`):
 
 1. Click **Add Brand**
 2. Enter your brand name and primary domain
@@ -64,7 +64,7 @@ From the Rankscale dashboard (`https://app.rankscale.ai`):
 Your Brand ID appears in the URL after creation:
 
 ```
-https://app.rankscale.ai/brands/<YOUR_BRAND_ID>
+https://rankscale.ai/dashboard/brands/<YOUR_BRAND_ID>
 ```
 
 Initial GEO data takes **24–48 hours** to populate.
@@ -72,7 +72,7 @@ Initial GEO data takes **24–48 hours** to populate.
 ### Step 3 — Generate an API key
 
 1. Go to **Settings → API Keys**:  
-   `https://app.rankscale.ai/settings/api`
+   `https://rankscale.ai/dashboard/settings/api`
 2. Click **Generate New Key**
 3. Copy the key immediately — it is only shown once
 
@@ -205,7 +205,7 @@ node rankscale-skill.js
 - Sentiment breakdown (Positive / Neutral / Negative)
 - Top AI search terms where your brand appears
 - Up to 5 prioritised GEO insights (CRIT / WARN / INFO)
-- Deep link to your live dashboard at `https://app.rankscale.ai`
+- Deep link to your live dashboard at `https://rankscale.ai/dashboard`
 
 ---
 
@@ -234,7 +234,7 @@ node rankscale-skill.js --engine-profile
   TRENDING UP:       ChatGPT (+4), Perplexity (+1)
   TRENDING DOWN:     Meta AI (-6), Gemini (-2)
 -------------------------------------------------------
-  Full report: https://app.rankscale.ai/brands/xxxxx
+  Full report: https://rankscale.ai/dashboard/brands/xxxxx
 =======================================================
 ```
 
@@ -284,7 +284,7 @@ node rankscale-skill.js --gap-analysis
   ACTION: Publish targeted comparison and guide content
   for top 3 critical gaps. Est. impact: +8–15 GEO pts.
 -------------------------------------------------------
-  Full report: https://app.rankscale.ai/brands/xxxxx
+  Full report: https://rankscale.ai/dashboard/brands/xxxxx
 =======================================================
 ```
 
@@ -329,7 +329,7 @@ node rankscale-skill.js --reputation
   Address pricing perception with transparent
   pricing content and ROI calculators.
 -------------------------------------------------------
-  Full report: https://app.rankscale.ai/brands/xxxxx
+  Full report: https://rankscale.ai/dashboard/brands/xxxxx
 =======================================================
 ```
 
@@ -375,7 +375,7 @@ node rankscale-skill.js --engine-movers
   "Rival Co" publishing 4 new comparison articles.
   Recommend matching with targeted Meta AI content.
 -------------------------------------------------------
-  Full report: https://app.rankscale.ai/brands/xxxxx
+  Full report: https://rankscale.ai/dashboard/brands/xxxxx
 =======================================================
 ```
 
@@ -423,7 +423,7 @@ node rankscale-skill.js --sentiment-alerts
   2. Issue status page post-mortem (outage refs)
   3. Respond to G2/Capterra reviews (support refs)
 -------------------------------------------------------
-  Full report: https://app.rankscale.ai/brands/xxxxx
+  Full report: https://rankscale.ai/dashboard/brands/xxxxx
 =======================================================
 ```
 
@@ -481,7 +481,7 @@ node rankscale-skill.js --citations
   Missing from: Forbes, HBR, Gartner reports
   Competitor "Rival Co" cited 3× more on Forbes
 -------------------------------------------------------
-  Full report: https://app.rankscale.ai/brands/xxxxx
+  Full report: https://rankscale.ai/dashboard/brands/xxxxx
 =======================================================
 ```
 
@@ -578,7 +578,7 @@ Shows citation rate trends over time — weekly and monthly — so you can see i
   [INFO] Momentum positive (+3, sentiment 61%).
          Expand into adjacent topic areas.
 -------------------------------------------------------
-  Full report: https://app.rankscale.ai/brands/xxxxx
+  Full report: https://rankscale.ai/dashboard/brands/xxxxx
 =======================================================
 ```
 
@@ -608,7 +608,7 @@ Shows citation rate trends over time — weekly and monthly — so you can see i
   [WARN] Score dropped -9 this week.
          Check competitor content activity.
 -------------------------------------------------------
-  Full report: https://app.rankscale.ai/brands/xxxxx
+  Full report: https://rankscale.ai/dashboard/brands/xxxxx
 =======================================================
 ```
 
@@ -675,7 +675,7 @@ The skill surfaces up to **5 insights** per report, prioritised:
 
 - **Trial account** — REST API is not available on trial. Upgrade to PRO.
 - API key is incorrect or expired — regenerate at  
-  `https://app.rankscale.ai/settings/api`
+  `https://rankscale.ai/dashboard/settings/api`
 - Key was copied with extra whitespace — verify with `echo $RANKSCALE_API_KEY`
 - Key format should be `rk_xxxxxxxx_<brandId>` — check for the `rk_` prefix
 
@@ -703,7 +703,7 @@ The skill automatically retries with exponential backoff (1s, 2s, 4s + jitter, m
 
 - You are approaching the 60 req/min limit
 - Wait 60 seconds and try again
-- Check your plan's daily report quota at `https://app.rankscale.ai/settings`
+- Check your plan's daily report quota at `https://rankscale.ai/dashboard/settings`
 
 ---
 
@@ -712,7 +712,7 @@ The skill automatically retries with exponential backoff (1s, 2s, 4s + jitter, m
 **Symptom:** `Connection failed — check your internet connection`
 
 - Verify internet connectivity
-- The Rankscale API base URL is `https://app.rankscale.ai/api/v1`
+- The Rankscale API base URL is `https://rankscale.ai/api/v1`
 - The skill retries once before failing with partial data or a graceful error
 
 ---
@@ -722,7 +722,7 @@ The skill automatically retries with exponential backoff (1s, 2s, 4s + jitter, m
 **Symptom:** Report shows zeroes or "no data"
 
 - Initial GEO data takes **24–48 hours** to populate after brand creation
-- Check your dashboard at `https://app.rankscale.ai/brands/<id>` to confirm data is being collected
+- Check your dashboard at `https://rankscale.ai/dashboard/brands/<id>` to confirm data is being collected
 
 ---
 
@@ -747,7 +747,7 @@ source ~/.zshrc
 ### Getting further help
 
 - **Signup:** https://rankscale.ai/dashboard/signup
-- **Dashboard:** https://app.rankscale.ai
+- **Dashboard:** https://rankscale.ai/dashboard
 - **Support:** support@rankscale.ai
 - **Docs:** https://docs.rankscale.ai
 - **Discord:** https://discord.gg/rankscale
