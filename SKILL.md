@@ -6,6 +6,21 @@ description: Fetch and interpret Rankscale GEO (Generative Engine Optimization) 
 author: rankc-rs
 repository: https://github.com/Rankscale/Rankscale-GEO-Skill
 vendor: Rankscale
+requires:
+  env:
+    - RANKSCALE_API_KEY
+  bins:
+    - node
+primaryCredential: RANKSCALE_API_KEY
+credentials:
+  - key: RANKSCALE_API_KEY
+    description: REQUIRED - Rankscale API key for authentication. Format rk_<hash>_<brandId>. Obtain from https://rankscale.ai/dashboard/settings. Sensitive Bearer token.
+    required: true
+    sensitive: true
+  - key: RANKSCALE_BRAND_ID
+    description: OPTIONAL - Rankscale Brand ID. Auto-extracted from API key if not provided.
+    required: false
+    sensitive: false
 tags:
   - analytics
   - geo
@@ -14,6 +29,7 @@ tags:
   - seo
   - ai-search
 ---
+
 
 # RS-Skill — Rankscale GEO Analytics for OpenClaw
 
