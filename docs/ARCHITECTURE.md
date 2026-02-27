@@ -129,7 +129,7 @@ User-Agent: openclaw-rs-geo-analytics/1.0.1
 Content-Type: application/json
 ```
 
-Base URL: `https://rankscale.ai/v1/metrics`
+Base URL: `https://rankscale.ai`
 
 ### Request sequence (pseudo-code)
 

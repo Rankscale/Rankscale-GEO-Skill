@@ -5,16 +5,16 @@
 The skill connects to Rankscale's official API endpoint:
 
 ```
-https://rankscale.ai/v1/metrics
+https://rankscale.ai
 ```
 
 All endpoints are relative to this base URL:
-- `https://rankscale.ai/v1/metrics/brands`
-- `https://rankscale.ai/v1/metrics/report`
-- `https://rankscale.ai/v1/metrics/citations`
-- `https://rankscale.ai/v1/metrics/sentiment`
-- `https://rankscale.ai/v1/metrics/search-terms-report`
-- `https://rankscale.ai/v1/metrics/search-terms`
+- `https://rankscale.ai/brands`
+- `https://rankscale.ai/report`
+- `https://rankscale.ai/citations`
+- `https://rankscale.ai/sentiment`
+- `https://rankscale.ai/search-terms-report`
+- `https://rankscale.ai/search-terms`
 
 This is the **authoritative API endpoint** for Rankscale metrics queries.
 

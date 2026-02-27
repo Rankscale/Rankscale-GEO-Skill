@@ -19,7 +19,7 @@ const fs = require('fs');
 
 // ─── Config ──────────────────────────────────────────────
 const API_BASE =
-  'https://rankscale.ai/v1/metrics';
+  'https://rankscale.ai';
 const WIDTH = 55;
 const MAX_RETRIES = 3;
 const BACKOFF_BASE_MS = 1000;
@@ -274,22 +274,22 @@ class ApiError extends Error {
 
 /** GET /metricsV1Brands — list brands on this account */
 async function fetchBrands(apiKey) {
-  return apiRequest('brands', apiKey, 'GET');
+  return apiRequest('/v1/metrics/brands', apiKey, 'GET');
 }
 
 /** POST /metricsV1Report — visibility score, rank, competitors */
 async function fetchReport(apiKey, brandId) {
-  return apiRequest('report', apiKey, 'POST', { brandId });
+  return apiRequest('/v1/metrics/report', apiKey, 'POST', { brandId });
 }
 
 /** POST /metricsV1SearchTermsReport — top queries with detection */
 async function fetchSearchTermsReport(apiKey, brandId) {
-  return apiRequest('search-terms-report', apiKey, 'POST', { brandId });
+  return apiRequest('/v1/metrics/search-terms-report', apiKey, 'POST', { brandId });
 }
 
 /** POST /metricsV1SearchTerms — raw search terms */
 async function fetchSearchTerms(apiKey, brandId) {
-  return apiRequest(`search-terms?brandId=${brandId}`, apiKey, 'GET');
+  return apiRequest(`/v1/metrics/search-terms?brandId=${brandId}`, apiKey, 'GET');
 }
 
 /**
@@ -303,7 +303,7 @@ async function fetchSearchTerms(apiKey, brandId) {
  * @returns {Promise<object>}
  */
 async function fetchCitations(apiKey, brandId) {
-  return apiRequest('citations', apiKey, 'POST', { brandId });
+  return apiRequest('/v1/metrics/citations', apiKey, 'POST', { brandId });
 }
 
 /**
@@ -318,7 +318,7 @@ async function fetchCitations(apiKey, brandId) {
  * @returns {Promise<object>}
  */
 async function fetchSentiment(apiKey, brandId) {
-  return apiRequest('sentiment', apiKey, 'POST', { brandId });
+  return apiRequest('/v1/metrics/sentiment', apiKey, 'POST', { brandId });
 }
 
 // ─── Brands Normalization ─────────────────────────────────

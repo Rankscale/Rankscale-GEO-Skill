@@ -4,7 +4,7 @@
 
 This skill integrates with the Rankscale Metrics API to fetch GEO (Generative Engine Optimization) analytics data.
 
-**Base URL:** `https://rankscale.ai/v1/metrics`
+**Base URL:** `https://rankscale.ai`
 
 **Auth:** `Authorization: Bearer <RANKSCALE_API_KEY>`
 
@@ -144,10 +144,10 @@ JavaScript/Node.js:
 ```javascript
 const apiKey = process.env.RANKSCALE_API_KEY;
 const brandId = process.env.RANKSCALE_BRAND_ID;
-const base = 'https://rankscale.ai/v1/metrics';
+const base = 'https://rankscale.ai';
 
 async function fetch_api(path, method = 'GET', body = null) {
-  const res = await fetch(`${base}/${path}`, {
+  const res = await fetch(`${base}/v1/metrics/${path}`, {
     method,
     headers: { 'Authorization': `Bearer ${apiKey}` },
     body: body ? JSON.stringify(body) : null
@@ -156,13 +156,13 @@ async function fetch_api(path, method = 'GET', body = null) {
 }
 
 // Fetch brands
-const brands = await fetch_api('brands');
+const brands = await fetch_api('/v1/metrics/brands');
 
 // Fetch report
-const report = await fetch_api('report', 'POST', { brandId });
+const report = await fetch_api('/v1/metrics/report', 'POST', { brandId });
 
 // Fetch search terms
-const searchTerms = await fetch_api(`search-terms?brandId=${brandId}`);
+const searchTerms = await fetch_api(`/v1/metrics/search-terms?brandId=${brandId}`);
 ```
 
 ## Support
