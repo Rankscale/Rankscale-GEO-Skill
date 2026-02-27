@@ -6,8 +6,6 @@
 
 All Rankscale Metrics API endpoints are served from `https://rankscale.ai` under the `/v1/metrics/` path prefix.
 
-> ⚠️ The Cloud Functions URL (`https://us-central1-rankscale-2e08e.cloudfunctions.net`) is deprecated and must **not** be used. All integrations must use `https://rankscale.ai`.
-
 ---
 
 ## Endpoint Reference
