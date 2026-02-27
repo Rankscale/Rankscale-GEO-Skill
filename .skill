@@ -4,6 +4,7 @@
   "version": "1.0.1",
   "description": "Fetch and interpret Rankscale GEO (Generative Engine Optimization) analytics. Pulls brand visibility score, citation rate, sentiment, and top AI search terms. Generates actionable GEO insights using 7 interpretation rules.",
   "author": "RankClaw-RS",
+  "homepage": "https://github.com/Rankscale/Rankscale-GEO-Skill",
   "entrypoint": "rankscale-skill.js",
   "runtime": "node",
   "nodeVersion": ">=16",
@@ -25,15 +26,14 @@
   "credentials": [
     {
       "key": "RANKSCALE_API_KEY",
-      "description": "Rankscale API key (format: rk_<hash>_<brandId>)",
+      "description": "Rankscale API key (format: rk_<hash>_<brandId>). Required for authenticating with the Rankscale Metrics API.",
       "required": true,
       "link": "https://rankscale.ai/dashboard/settings"
     },
     {
       "key": "RANKSCALE_BRAND_ID",
-      "description": "Rankscale Brand ID (extracted from API key if omitted)",
-      "required": false,
-      "note": "Auto-extracted from API key suffix if not set"
+      "description": "Rankscale Brand ID. Optional — automatically extracted from API key suffix if not set.",
+      "required": false
     }
   ],
   "output": {
