@@ -4,27 +4,16 @@
 
 The skill connects to Rankscale's official API backend:
 ```
-https://us-central1-rankscale-2e08e.cloudfunctions.net
+https://rankscale.ai/api/v1
 ```
 
-This Google Cloud Functions endpoint is the **authoritative API backend** for Rankscale metrics queries. It is maintained and operated by Rankscale and is documented in the official Rankscale API integration guide.
-
-## Dashboard URL
-
-For user-facing operations (signup, API key generation, brand management), use:
-```
-https://rankscale.ai/dashboard
-```
-
-## Why CloudFunctions?
-
-The CloudFunctions domain is the official API backend — this is a standard practice for SaaS APIs to separate frontend (dashboard) from backend services. The skill correctly targets this endpoint.
+This is the **authoritative API endpoint** for Rankscale metrics queries. It is the primary domain for all REST API operations.
 
 ## Verification
 
-To verify this endpoint is official:
-1. Contact support@rankscale.ai
-2. Check your Rankscale account API documentation
-3. Review the official Rankscale API reference
+To verify this endpoint is correct:
+1. Check your Rankscale dashboard: Settings → Integrations → API Keys
+2. Contact support@rankscale.ai for confirmation
+3. Review official Rankscale API documentation at rankscale.ai
 
-Both endpoints are official and safe to use with valid Rankscale API credentials.
+This endpoint is official and safe to use with valid Rankscale API credentials.

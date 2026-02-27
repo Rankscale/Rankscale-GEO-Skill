@@ -19,7 +19,7 @@ const fs = require('fs');
 
 // ─── Config ──────────────────────────────────────────────
 const API_BASE =
-  'https://us-central1-rankscale-2e08e.cloudfunctions.net';
+  'https://rankscale.ai/api/v1';
 const WIDTH = 55;
 const MAX_RETRIES = 3;
 const BACKOFF_BASE_MS = 1000;
