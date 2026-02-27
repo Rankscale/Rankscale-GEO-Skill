@@ -1,5 +1,5 @@
 ---
-title: Rankscale GEO Analytics
+name: Rankscale GEO Analytics
 description: Fetch and interpret Rankscale GEO (Generative Engine Optimization) analytics. Pulls brand visibility score, citation rate, sentiment, and top AI search terms.
 version: 1.0.9
 metadata:
@@ -21,6 +21,7 @@ metadata:
       - kind: node
         bins: [node]
 ---
+
 
 
 
