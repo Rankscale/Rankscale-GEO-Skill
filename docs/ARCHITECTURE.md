@@ -75,17 +75,17 @@ User message or CLI invocation
         v
 2. Brand Resolution
    - If RANKSCALE_BRAND_ID set: use it directly
-   - Else: call GET /v1/metrics/brands
+   - Else: call GET /brands
      - If 1 brand: auto-select
      - If multiple: prompt user to select with --discover-brands
         |
         v
 3. Data Fetching
-   - GET /v1/metrics/report              (sequential, first)
-   - GET /v1/metrics/citations           (parallel)
-   - GET /v1/metrics/sentiment           (parallel)
-   - GET /v1/metrics/search-terms-report (parallel)
-   - GET /v1/metrics/engine-data         (parallel, v1.0.1+)
+   - POST /report              (sequential, first)
+   - POST /citations           (parallel)
+   - POST /sentiment           (parallel)
+   - POST /search-terms-report (parallel)
+   - GET /engine-data         (parallel, v1.0.6+)
         |
         v
 4. Normalization
@@ -129,7 +129,7 @@ User-Agent: openclaw-rs-geo-analytics/1.0.1
 Content-Type: application/json
 ```
 
-Base URL: `https://rankscale.ai/api`
+Base URL: `https://rankscale.ai/v1/metrics`
 
 ### Request sequence (pseudo-code)
 
@@ -145,7 +145,7 @@ report  = await fetchReport(brandId)  # sequential (needed for brandName)
   fetchCitations(brandId),
   fetchSentiment(brandId),
   fetchSearchTerms(brandId),
-  fetchEngineData(brandId),            # v1.0.1+
+  fetchEngineData(brandId),            # v1.0.6+
 ])
 
 data = {
