@@ -72,7 +72,7 @@ Initial GEO data takes **24–48 hours** to populate.
 ### Step 3 — Generate an API key
 
 1. Go to **Settings → API Keys**:  
-   `https://rankscale.ai/dashboard/settings/api`
+   `https://rankscale.ai/dashboard/settings`
 2. Click **Generate New Key**
 3. Copy the key immediately — it is only shown once
 
@@ -675,7 +675,7 @@ The skill surfaces up to **5 insights** per report, prioritised:
 
 - **Trial account** — REST API is not available on trial. Upgrade to PRO.
 - API key is incorrect or expired — regenerate at  
-  `https://rankscale.ai/dashboard/settings/api`
+  `https://rankscale.ai/dashboard/settings`
 - Key was copied with extra whitespace — verify with `echo $RANKSCALE_API_KEY`
 - Key format should be `rk_xxxxxxxx_<brandId>` — check for the `rk_` prefix
 
