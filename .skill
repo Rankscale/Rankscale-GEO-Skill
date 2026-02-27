@@ -1,10 +1,11 @@
 {
   "id": "rs-geo-analytics",
   "name": "Rankscale GEO Analytics",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Fetch and interpret Rankscale GEO (Generative Engine Optimization) analytics. Pulls brand visibility score, citation rate, sentiment, and top AI search terms. Generates actionable GEO insights using 7 interpretation rules.",
-  "author": "RankClaw-RS",
+  "author": "rankc-rs",
   "homepage": "https://github.com/Rankscale/Rankscale-GEO-Skill",
+  "repository": "https://github.com/Rankscale/Rankscale-GEO-Skill",
   "entrypoint": "rankscale-skill.js",
   "runtime": "node",
   "nodeVersion": ">=16",
@@ -26,13 +27,13 @@
   "credentials": [
     {
       "key": "RANKSCALE_API_KEY",
-      "description": "Rankscale API key (format: rk_<hash>_<brandId>). Required for authenticating with the Rankscale Metrics API.",
+      "description": "Rankscale API key (required). Format: rk_<hash>_<brandId>. Obtain from https://rankscale.ai/dashboard/settings. This is a sensitive Bearer token — do not share or commit to version control.",
       "required": true,
-      "link": "https://rankscale.ai/dashboard/settings"
+      "sensitive": true
     },
     {
       "key": "RANKSCALE_BRAND_ID",
-      "description": "Rankscale Brand ID. Optional — automatically extracted from API key suffix if not set.",
+      "description": "Rankscale Brand ID (optional). Automatically extracted from API key suffix if not provided. Set only if you need to query a different brand than the one encoded in your API key.",
       "required": false
     }
   ],
@@ -48,7 +49,6 @@
   "assets": [
     "assets/onboarding.md"
   ],
-  "repository": "https://github.com/Rankscale/Rankscale-GEO-Skill",
   "tags": [
     "analytics",
     "geo",
