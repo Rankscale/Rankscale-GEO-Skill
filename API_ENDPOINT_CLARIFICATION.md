@@ -1,30 +1,36 @@
 # API Endpoint Clarification
 
-## Official API Base
+## Canonical Base URL
 
-The skill connects to Rankscale's official API backend:
+**Base:** `https://rankscale.ai`
+
+All Rankscale Metrics API endpoints are served from `https://rankscale.ai` under the `/v1/metrics/` path prefix.
+
+> ⚠️ The Cloud Functions URL (`https://us-central1-rankscale-2e08e.cloudfunctions.net`) is **deprecated** and must not be used. It has been removed from this skill as of v1.0.4.
+
+---
+
+## Endpoint Reference
+
+All endpoints are relative to the base `https://rankscale.ai`:
+
+| Resource | Method | Path |
+|---|---|---|
+| Brands | GET | `/v1/metrics/brands` |
+| GEO Report | GET | `/v1/metrics/report` |
+| Citations | GET | `/v1/metrics/citations` |
+| Sentiment | GET | `/v1/metrics/sentiment` |
+| Search Terms | GET | `/v1/metrics/search-terms-report` |
+
+### Authentication
+
+All requests require: `Authorization: Bearer <RANKSCALE_API_KEY>`
+
+---
+
+## Example
+
+```bash
+curl -H "Authorization: Bearer $RANKSCALE_API_KEY" \
+  https://rankscale.ai/v1/metrics/brands
 ```
-https://us-central1-rankscale-2e08e.cloudfunctions.net
-```
-
-This Google Cloud Functions endpoint is the **authoritative API backend** for Rankscale metrics queries. It is maintained and operated by Rankscale and is documented in the official Rankscale API integration guide.
-
-## Dashboard URL
-
-For user-facing operations (signup, API key generation, brand management), use:
-```
-https://rankscale.ai/dashboard
-```
-
-## Why CloudFunctions?
-
-The CloudFunctions domain is the official API backend — this is a standard practice for SaaS APIs to separate frontend (dashboard) from backend services. The skill correctly targets this endpoint.
-
-## Verification
-
-To verify this endpoint is official:
-1. Contact support@rankscale.ai
-2. Check your Rankscale account API documentation
-3. Review the official Rankscale API reference
-
-Both endpoints are official and safe to use with valid Rankscale API credentials.

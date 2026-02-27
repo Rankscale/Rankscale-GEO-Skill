@@ -1,6 +1,6 @@
 # Rankscale API Integration Reference
 
-**Base URL:** `https://rankscale.ai/api/v1`  
+**Base URL:** `https://rankscale.ai`  
 **Auth:** `Authorization: Bearer <RANKSCALE_API_KEY>`  
 **Format:** JSON request/response  
 **Rate Limit:** 60 req/min per key (429 on breach)
@@ -345,7 +345,7 @@ Retry-After: 30
 ```bash
 API_KEY="rk_YOUR_API_KEY_HERE"
 BRAND_ID="YOUR_BRAND_ID_HERE"
-BASE="https://rankscale.ai/api/v1"
+BASE="https://rankscale.ai"
 
 # GEO Score
 curl -H "Authorization: Bearer $API_KEY" \
@@ -369,7 +369,7 @@ curl -H "Authorization: Bearer $API_KEY" \
 ```js
 const apiKey = process.env.RANKSCALE_API_KEY;  // rk_YOUR_API_KEY_HERE
 const brandId = process.env.RANKSCALE_BRAND_ID;  // YOUR_BRAND_ID_HERE
-const base = 'https://rankscale.ai/api/v1';
+const base = 'https://rankscale.ai';
 
 async function get(path) {
   const res = await fetch(`${base}/${path}`, {

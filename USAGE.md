@@ -117,12 +117,14 @@ export RANKSCALE_API_KEY="rk_xxxxxxxx_<brandId>"
 export RANKSCALE_BRAND_ID="<brandId>"
 ```
 
-To persist across sessions, add to your shell config (`~/.bashrc` or `~/.zshrc`):
+> ⚠️ **Security Warning:** Do not store plaintext secrets in `~/.zshrc`. Use a `.env` file with `chmod 600` or configure via OpenClaw Gateway env.
+
+To persist across sessions, use a `.env` file:
 
 ```bash
-echo 'export RANKSCALE_API_KEY="rk_xxxxxxxx_<brandId>"' >> ~/.zshrc
-echo 'export RANKSCALE_BRAND_ID="<brandId>"' >> ~/.zshrc
-source ~/.zshrc
+echo 'RANKSCALE_API_KEY="rk_xxxxxxxx_<brandId>"' >> .env
+echo 'RANKSCALE_BRAND_ID="<brandId>"' >> .env
+chmod 600 .env
 ```
 
 ### `.env` file
@@ -712,7 +714,7 @@ The skill automatically retries with exponential backoff (1s, 2s, 4s + jitter, m
 **Symptom:** `Connection failed — check your internet connection`
 
 - Verify internet connectivity
-- The Rankscale API base URL is `https://rankscale.ai/api/v1`
+- The Rankscale API base URL is `https://rankscale.ai`
 - The skill retries once before failing with partial data or a graceful error
 
 ---
@@ -737,9 +739,9 @@ Your credentials are not persisted. Fix:
 echo $RANKSCALE_API_KEY
 echo $RANKSCALE_BRAND_ID
 
-# If empty, add to shell config
-echo 'export RANKSCALE_API_KEY="rk_xxxxxxxx_<brandId>"' >> ~/.zshrc
-source ~/.zshrc
+# If empty, use a .env file (do not store plaintext secrets in ~/.zshrc)
+# Do not store plaintext secrets in ~/.zshrc. Use .env with chmod 600 or configure via OpenClaw Gateway env.
+echo 'RANKSCALE_API_KEY="rk_xxxxxxxx_<brandId>"' >> .env && chmod 600 .env
 ```
 
 ---
