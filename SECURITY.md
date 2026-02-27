@@ -45,7 +45,7 @@ Load with: `source .env && node rankscale-skill.js`
 
 The skill calls:
 ```
-https://us-central1-rankscale-2e08e.cloudfunctions.net
+https://rankscale.ai/api/v1
 ```
 
 This is the **official Rankscale Metrics API backend**. Verify with Rankscale support if unsure.

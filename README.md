@@ -1,6 +1,6 @@
 # 🚀 Rankscale GEO Analytics for OpenClaw
 
-![Version](https://img.shields.io/badge/version-v1.0.1-blue) ![Status](https://img.shields.io/badge/status-Production%20Ready-brightgreen) ![Platform](https://img.shields.io/badge/platform-OpenClaw-purple)
+![Version](https://img.shields.io/badge/version-v1.0.6-blue) ![Status](https://img.shields.io/badge/status-Production%20Ready-brightgreen) ![Platform](https://img.shields.io/badge/platform-OpenClaw-purple)
 
 ## The Best AI Rank Tracker & Generative Engine Optimization Tool
 
@@ -284,7 +284,7 @@ This OpenClaw skill is provided as part of the Rankscale ecosystem.
 
 - **License:** MIT — use it, fork it, build on it
 - **Contributing:** PRs and improvements welcome. Open an issue or email [support@rankscale.ai](mailto:support@rankscale.ai) to discuss
-- **Versioning:** Follows [Semantic Versioning](https://semver.org/) — current release is v1.0.1
+- **Versioning:** Follows [Semantic Versioning](https://semver.org/) — current release is v1.0.6
 
 ---
 

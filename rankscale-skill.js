@@ -127,7 +127,7 @@ function apiRequest(endpoint, apiKey, method = 'GET', body = null, retries = 0) 
     const headers = {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
-      'User-Agent': 'openclaw-rs-geo-analytics/1.0.0',
+      'User-Agent': 'openclaw-rs-geo-analytics/1.0.6',
     };
     if (bodyStr) {
       headers['Content-Length'] = Buffer.byteLength(bodyStr);

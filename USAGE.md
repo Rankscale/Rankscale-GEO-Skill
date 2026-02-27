@@ -1,6 +1,6 @@
 # USAGE — Rankscale GEO Analytics Skill
 
-**Skill ID:** `rs-geo-analytics` | **Version:** v1.0.1
+**Skill ID:** `rs-geo-analytics` | **Version:** v1.0.6
 
 ---
 
@@ -23,7 +23,7 @@
 2. [Credential Configuration](#credential-configuration)
 3. [Trigger Patterns](#trigger-patterns)
 4. [Command-Line Flags](#command-line-flags)
-5. [v1.0.1 Features](#v101-features)
+5. [v1.0.6 Features](#v101-features)
    - [Default GEO Report](#default-geo-report)
    - [Engine Strength Profile](#engine-strength-profile----engine-profile)
    - [Content Gap Analysis](#content-gap-analysis----gap-analysis)
@@ -189,7 +189,7 @@ The skill activates when your AI assistant detects any of the following patterns
 
 ---
 
-## v1.0.1 Features
+## v1.0.6 Features
 
 ### Default GEO Report
 
