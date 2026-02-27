@@ -24,20 +24,29 @@ Sign up at [rankscale.ai](https://rankscale.ai/dashboard/signup) and set up your
 
 > **⚠️ Requirements:** A **Rankscale PRO account** (or higher) is required. Trial accounts do not have REST API access. You must be on PRO before requesting API activation.
 
-**Step 2 — Activate REST API Access**
-Email `support@rankscale.ai` with the subject: _"Please activate REST API access"_
-You'll receive your API Key and Brand ID within 24 hours.
+**Step 2 — Request REST API Access & Get Your API Key**
+1. Email `support@rankscale.ai` with subject: _"Please activate REST API access for my account"_
+2. Once activated (usually within 24 hours), log into your Rankscale dashboard
+3. Go to **Settings → Integrations → API Keys**
+4. Generate a new API key (format: `rk_<hash>_<brandId>`)
+5. Copy it immediately — it's only shown once
+
+The Brand ID is embedded in your API key suffix and will be extracted automatically.
 
 **Step 3 — Set Environment Variables**
 Add to your OpenClaw Gateway config:
 ```
 RANKSCALE_API_KEY=rk_...
-RANKSCALE_BRAND_ID=...
+```
+
+The Brand ID is optional (auto-extracted from your API key):
+```
+RANKSCALE_BRAND_ID=...  # Optional — only if querying a different brand
 ```
 
 Then run: `node rankscale-skill.js --discover-brands` to verify your setup.
 
-> **Tip:** If your API key has the format `rk_<hash>_<brandId>`, the Brand ID is automatically extracted — no separate config needed.
+> **Tip:** Your API key format is `rk_<hash>_<brandId>`. The Brand ID is automatically extracted, so you usually only need to set `RANKSCALE_API_KEY`.
 
 ---
 
