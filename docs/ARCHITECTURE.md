@@ -129,7 +129,7 @@ User-Agent: openclaw-rs-geo-analytics/1.0.1
 Content-Type: application/json
 ```
 
-Base URL: `https://app.rankscale.ai/api/v1`
+Base URL: `https://rankscale.ai/api/v1`
 
 ### Request sequence (pseudo-code)
 
@@ -345,7 +345,7 @@ The renderer (`renderReport`) produces a fixed-width text block for output.
          <action wrapped at 40 chars>
   ...
 -------------------------------------------------------
-  Full report: https://app.rankscale.ai/brands/<id>
+  Full report: https://rankscale.ai/dashboard/brands/<id>
 =======================================================
 ```
 

@@ -1,11 +1,9 @@
 {
   "id": "rs-geo-analytics",
   "name": "Rankscale GEO Analytics",
-  "version": "1.0.0",
-  "description": "Fetch and interpret Rankscale GEO (Generative Engine Optimization) analytics. Pulls brand visibility score, citation rate, sentiment, and top AI search terms. Generates actionable GEO insights using 10 interpretation rules.",
-  "author": "sonicClaw@rankscale.ai",
-  "brand": "Rankscale",
-  "ticket": "RS-126",
+  "version": "1.0.1",
+  "description": "Fetch and interpret Rankscale GEO (Generative Engine Optimization) analytics. Pulls brand visibility score, citation rate, sentiment, and top AI search terms. Generates actionable GEO insights using 7 interpretation rules.",
+  "author": "RankClaw-RS",
   "entrypoint": "rankscale-skill.js",
   "runtime": "node",
   "nodeVersion": ">=16",
@@ -29,7 +27,7 @@
       "key": "RANKSCALE_API_KEY",
       "description": "Rankscale API key (format: rk_<hash>_<brandId>)",
       "required": true,
-      "link": "https://app.rankscale.ai/settings/api"
+      "link": "https://rankscale.ai/dashboard/settings"
     },
     {
       "key": "RANKSCALE_BRAND_ID",
@@ -37,21 +35,6 @@
       "required": false,
       "note": "Auto-extracted from API key suffix if not set"
     }
-  ],
-  "capabilities": [
-    "geo_score",
-    "citation_analysis",
-    "sentiment_analysis",
-    "search_terms",
-    "brand_discovery",
-    "geo_interpretation"
-  ],
-  "endpoints": [
-    "GET /v1/metrics/brands",
-    "GET /v1/metrics/report",
-    "GET /v1/metrics/citations",
-    "GET /v1/metrics/sentiment",
-    "GET /v1/metrics/search-terms-report"
   ],
   "output": {
     "format": "ascii",
@@ -65,8 +48,7 @@
   "assets": [
     "assets/onboarding.md"
   ],
-  "repository": "https://github.com/Mathias-RS/RS-Skill",
-  "branch": "feature/rs-126-geo-analytics-skill",
+  "repository": "https://github.com/Rankscale/Rankscale-GEO-Skill",
   "tags": [
     "analytics",
     "geo",
@@ -75,12 +57,5 @@
     "rankscale",
     "brand",
     "visibility"
-  ],
-  "clawhhub": {
-    "category": "Analytics",
-    "subcategory": "GEO / AI Search",
-    "icon": "chart-bar",
-    "color": "#6366F1",
-    "onboarding": "assets/onboarding.md"
-  }
+  ]
 }

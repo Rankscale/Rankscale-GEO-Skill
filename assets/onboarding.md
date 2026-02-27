@@ -28,7 +28,7 @@ From your Dashboard:
 Rankscale begins collecting data. Initial report: 24-48 hours.
 
 Your Brand ID appears in the brand card and dashboard URL:
-  https://rankscale.ai/brands/<YOUR_BRAND_ID>
+  https://rankscale.ai/dashboard/brands/<YOUR_BRAND_ID>
 
 ---
 

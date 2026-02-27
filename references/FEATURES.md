@@ -39,7 +39,7 @@ node rankscale-skill.js
   Double down on formats producing citations.
   Consider expanding to adjacent topics.
 -------------------------------------------------------
-  Full report: https://app.rankscale.ai/brands/[your-brand]
+  Full report: https://rankscale.ai/dashboard/brands/[your-brand]
 =======================================================
 ```
 
@@ -64,7 +64,7 @@ node rankscale-skill.js
   Add schema markup, improve content depth,
   and increase citation velocity.
 -------------------------------------------------------
-  Full report: https://app.rankscale.ai/brands/[your-brand]
+  Full report: https://rankscale.ai/dashboard/brands/[your-brand]
 =======================================================
 ```
 

@@ -30,7 +30,7 @@ Set RANKSCALE_API_KEY and RANKSCALE_BRAND_ID to get started.
 ```
 Auth error fetching report: Authentication failed (HTTP 401).
 Check your RANKSCALE_API_KEY.
-Verify your key at https://app.rankscale.ai/settings/api
+Verify your key at https://rankscale.ai/dashboard/settings/api
 ```
 
 **Cause:** Your API key is invalid, expired, mis-typed, **or your account is on a trial plan**.
@@ -43,7 +43,7 @@ Verify your key at https://app.rankscale.ai/settings/api
 2. ✅ **REST API is activated by support**
    - Email `support@rankscale.ai` — Subject: "Please activate REST API access"
    - REST API access must be explicitly enabled even on PRO accounts
-3. Verify the key at [app.rankscale.ai/settings/api](https://app.rankscale.ai/settings/api)
+3. Verify the key at [rankscale.ai/dashboard/settings/api](https://rankscale.ai/dashboard/settings/api)
 4. Re-copy the key — make sure there are no trailing spaces
 
 ---
@@ -69,7 +69,7 @@ Not found (report): Resource not found: metrics/report?brandId=xxx (HTTP 404)
 **Symptom:**
 ```
 Error fetching report: Network error on metrics/report?brandId=xxx:
-getaddrinfo ENOTFOUND app.rankscale.ai
+getaddrinfo ENOTFOUND rankscale.ai
 ```
 The skill falls back to zeroed data and fires CRIT rules:
 ```
@@ -77,12 +77,12 @@ The skill falls back to zeroed data and fires CRIT rules:
 [CRIT] GEO score critically low (<40).
 ```
 
-**Cause:** Your environment cannot reach `app.rankscale.ai`. Common in sandboxed environments, corporate proxies, or restricted networks.
+**Cause:** Your environment cannot reach `rankscale.ai`. Common in sandboxed environments, corporate proxies, or restricted networks.
 
 **Fix:**
-1. Check internet connectivity: `curl https://app.rankscale.ai/health`
+1. Check internet connectivity: `curl https://rankscale.ai/health`
 2. If behind a proxy, configure `HTTPS_PROXY` in your environment
-3. If running in a CI/sandbox environment, whitelist `app.rankscale.ai`
+3. If running in a CI/sandbox environment, whitelist `rankscale.ai`
 4. The skill retries 3× per endpoint — total time ~14s before falling back
 
 > **Note:** Zeroed data with CRIT insights does NOT mean your brand is in trouble — it means the API was unreachable. Check connectivity first.
@@ -112,7 +112,7 @@ The skill pauses briefly then retries automatically. You may see slightly longer
 **Expected behavior:** With a healthy API connection, execution takes 2–4 seconds.
 
 **Fix:**
-1. Check DNS resolution: `nslookup app.rankscale.ai`
+1. Check DNS resolution: `nslookup rankscale.ai`
 2. If DNS is slow, consider configuring a faster DNS resolver (e.g., 1.1.1.1)
 3. If in a sandboxed environment, see "Network / DNS Failure" above
 
@@ -163,4 +163,4 @@ We are happy to support.
 Include in your support email:
 - Your OS and Node.js version (`node --version`)
 - The exact error message
-- Whether `curl https://app.rankscale.ai/health` succeeds
+- Whether `curl https://rankscale.ai/health` succeeds
