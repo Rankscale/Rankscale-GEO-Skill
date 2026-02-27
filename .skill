@@ -1,9 +1,9 @@
 {
   "id": "rs-geo-analytics",
   "name": "Rankscale GEO Analytics",
-  "version": "1.0.0",
-  "description": "Fetch and interpret Rankscale GEO (Generative Engine Optimization) analytics. Pulls brand visibility score, citation rate, sentiment, and top AI search terms. Generates actionable GEO insights using 10 interpretation rules.",
-  "author": "sonicClaw@rankscale.ai",
+  "version": "1.0.1",
+  "description": "Fetch and interpret Rankscale GEO (Generative Engine Optimization) analytics. Pulls brand visibility score, citation rate, sentiment, and top AI search terms. Generates actionable GEO insights using 7 interpretation rules.",
+  "author": "RankClaw-RS",
   "brand": "Rankscale",
   "ticket": "RS-126",
   "entrypoint": "rankscale-skill.js",
@@ -29,7 +29,7 @@
       "key": "RANKSCALE_API_KEY",
       "description": "Rankscale API key (format: rk_<hash>_<brandId>)",
       "required": true,
-      "link": "https://app.rankscale.ai/settings/api"
+      "link": "https://rankscale.ai/dashboard/settings/api"
     },
     {
       "key": "RANKSCALE_BRAND_ID",
@@ -65,8 +65,8 @@
   "assets": [
     "assets/onboarding.md"
   ],
-  "repository": "https://github.com/Mathias-RS/RS-Skill",
-  "branch": "feature/rs-126-geo-analytics-skill",
+  "repository": "https://github.com/Rankscale/Rankscale-GEO-Skill",
+  "branch": "main",
   "tags": [
     "analytics",
     "geo",
