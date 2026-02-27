@@ -1,7 +1,7 @@
 {
   "id": "rs-geo-analytics",
   "name": "Rankscale GEO Analytics",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Fetch and interpret Rankscale GEO (Generative Engine Optimization) analytics. Pulls brand visibility score, citation rate, sentiment, and top AI search terms. Generates actionable GEO insights using 7 interpretation rules.",
   "author": "rankc-rs",
   "homepage": "https://github.com/Rankscale/Rankscale-GEO-Skill",
