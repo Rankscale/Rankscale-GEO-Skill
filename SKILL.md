@@ -1,34 +1,28 @@
 ---
 name: Rankscale GEO Analytics
-id: rs-geo-analytics
-version: 1.0.8
 description: Fetch and interpret Rankscale GEO (Generative Engine Optimization) analytics. Pulls brand visibility score, citation rate, sentiment, and top AI search terms.
-author: rankc-rs
-repository: https://github.com/Rankscale/Rankscale-GEO-Skill
-vendor: Rankscale
-requires:
-  env:
-    - RANKSCALE_API_KEY
-  bins:
-    - node
-primaryCredential: RANKSCALE_API_KEY
-credentials:
-  - key: RANKSCALE_API_KEY
-    description: REQUIRED - Rankscale API key for authentication. Format rk_<hash>_<brandId>. Obtain from https://rankscale.ai/dashboard/settings. Sensitive Bearer token.
-    required: true
-    sensitive: true
-  - key: RANKSCALE_BRAND_ID
-    description: OPTIONAL - Rankscale Brand ID. Auto-extracted from API key if not provided.
-    required: false
-    sensitive: false
-tags:
-  - analytics
-  - geo
-  - rankscale
-  - api
-  - seo
-  - ai-search
+version: 1.0.8
+metadata:
+  openclaw:
+    requires:
+      env:
+        - RANKSCALE_API_KEY
+      bins:
+        - node
+      config:
+        - .env
+    primaryEnv: RANKSCALE_API_KEY
+    always: false
+    skillKey: rankscale
+    emoji: 📊
+    homepage: https://rankscale.ai
+    os: []
+    install:
+      - kind: node
+        bins: [node]
 ---
+
+
 
 
 # RS-Skill — Rankscale GEO Analytics for OpenClaw
