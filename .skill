@@ -27,7 +27,7 @@
       "key": "RANKSCALE_API_KEY",
       "description": "Rankscale API key (format: rk_<hash>_<brandId>)",
       "required": true,
-      "link": "https://rankscale.ai/dashboard/settings/api"
+      "link": "https://rankscale.ai/dashboard/settings"
     },
     {
       "key": "RANKSCALE_BRAND_ID",
