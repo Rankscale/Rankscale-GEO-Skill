@@ -274,22 +274,22 @@ class ApiError extends Error {
 
 /** GET /metricsV1Brands — list brands on this account */
 async function fetchBrands(apiKey) {
-  return apiRequest('v1/metrics/brands', apiKey, 'GET');
+  return apiRequest('metrics/brands', apiKey, 'GET');
 }
 
 /** POST /metricsV1Report — visibility score, rank, competitors */
 async function fetchReport(apiKey, brandId) {
-  return apiRequest('v1/metrics/report', apiKey, 'POST', { brandId });
+  return apiRequest('metrics/report', apiKey, 'POST', { brandId });
 }
 
 /** POST /metricsV1SearchTermsReport — top queries with detection */
 async function fetchSearchTermsReport(apiKey, brandId) {
-  return apiRequest('v1/metrics/search-terms-report', apiKey, 'POST', { brandId });
+  return apiRequest('metrics/search-terms-report', apiKey, 'POST', { brandId });
 }
 
 /** POST /metricsV1SearchTerms — raw search terms */
 async function fetchSearchTerms(apiKey, brandId) {
-  return apiRequest('v1/metrics/search-terms', apiKey, 'POST', { brandId });
+  return apiRequest('metrics/search-terms', apiKey, 'POST', { brandId });
 }
 
 /**
@@ -303,7 +303,7 @@ async function fetchSearchTerms(apiKey, brandId) {
  * @returns {Promise<object>}
  */
 async function fetchCitations(apiKey, brandId) {
-  return apiRequest('v1/metrics/citations', apiKey, 'POST', { brandId });
+  return apiRequest('metrics/citations', apiKey, 'POST', { brandId });
 }
 
 /**
@@ -318,7 +318,7 @@ async function fetchCitations(apiKey, brandId) {
  * @returns {Promise<object>}
  */
 async function fetchSentiment(apiKey, brandId) {
-  return apiRequest('v1/metrics/sentiment', apiKey, 'POST', { brandId });
+  return apiRequest('metrics/sentiment', apiKey, 'POST', { brandId });
 }
 
 // ─── Brands Normalization ─────────────────────────────────
