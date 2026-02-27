@@ -61,11 +61,13 @@ Or pass on command line:
     --api-key rk_... \
     --brand-id <YOUR_BRAND_ID>
 
-To persist in shell config (~/.bashrc, ~/.zshrc, etc.):
+> ⚠️ **Security Warning:** Do not store plaintext secrets in ~/.zshrc. Use .env with chmod 600 or configure via OpenClaw Gateway env.
 
-  echo 'export RANKSCALE_API_KEY="rk_..."' >> ~/.zshrc
-  echo 'export RANKSCALE_BRAND_ID="..."' >> ~/.zshrc
-  source ~/.zshrc
+To persist credentials, use a .env file:
+
+  echo 'RANKSCALE_API_KEY="rk_..."' >> .env
+  echo 'RANKSCALE_BRAND_ID="..."' >> .env
+  chmod 600 .env
 
 ---
 
