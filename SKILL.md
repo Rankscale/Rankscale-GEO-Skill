@@ -1,7 +1,7 @@
 ---
 name: Rankscale GEO Analytics
 description: Fetch and interpret Rankscale GEO (Generative Engine Optimization) analytics. Pulls brand visibility score, citation rate, sentiment, and top AI search terms.
-version: 1.0.9
+version: 1.0.10
 metadata:
   openclaw:
     requires:
